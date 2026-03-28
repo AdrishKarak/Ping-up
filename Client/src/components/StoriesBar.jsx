@@ -2,6 +2,7 @@ import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { dummyStoriesData } from "../assets/assets";
 import StoryModal from "./StoryModal";
+import StoryViewer from "./StoryViewer";
 
 
 const StoriesBar = () => {
@@ -68,7 +69,7 @@ const StoriesBar = () => {
                 </div>
                 {/*map through stories */}
                 {stories.map((story, index) => (
-                    <div key={story._id || index} className="relative rounded-lg shadow-sm min-w-30 max-w-30 max-h-40 aspect-3/4 cursor-pointer hover:shadow-lg transition-all duration-200 overflow-hidden group shrink-0">
+                    <div onClick={() => setViewStory(story)} key={story._id || index} className="relative rounded-lg shadow-sm min-w-30 max-w-30 max-h-40 aspect-3/4 cursor-pointer hover:shadow-lg transition-all duration-200 overflow-hidden group shrink-0">
                         {story.media_type === "image" && (
                             <img src={story.media_url} alt="story" className="w-full h-full object-cover" />
                         )}
@@ -90,7 +91,10 @@ const StoriesBar = () => {
                     </div>
                 ))}
             </div>
+            {/* ADD story modal */}
             {showStoryModal && <StoryModal setShowStoryModal={setShowStoryModal} fetchStories={fetchStories} />}
+            {/*view story modal */}
+            {viewStory && <StoryViewer viewStory={viewStory} setViewStory={setViewStory} />}
         </div>
     )
 };

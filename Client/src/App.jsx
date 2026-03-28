@@ -11,12 +11,14 @@ import CreatePost from "./pages/CreatePost.jsx";
 import Layout from "./pages/Layout.jsx"
 import { useUser } from '@clerk/react';
 import Loading from "./components/Loading.jsx";
+import { Toaster } from 'react-hot-toast';
 
 const App = () => {
     const { user, isLoaded } = useUser();
     if (!isLoaded) return <Loading />;
     return (
         <div>
+            <Toaster />
             <Routes>
                 <Route path="/" element={!user ? <Login /> : <Layout />}>
                     < Route index element={<Feed />} />

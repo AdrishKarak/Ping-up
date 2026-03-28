@@ -1,6 +1,7 @@
 import { ArrowLeft, Type, Image as ImageIcon, Send, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { dummyStoriesData, dummyUserData } from "../assets/assets";
+import toast from "react-hot-toast";
 
 const StoryModal = ({ setShowStoryModal, fetchStories }) => {
     const bgcolors = ["#4f46e5", "#7c3aed", "#db2777", "#e11d48", "#ca8a04", "#0d9488", "#222222"]
@@ -123,7 +124,11 @@ const StoryModal = ({ setShowStoryModal, fetchStories }) => {
                 {/* Footer fixed button */}
                 <div className="absolute bottom-0 inset-x-0 pt-16 pb-4 flex justify-center z-20 pointer-events-none">
                     <button
-                        onClick={handleCreateStory}
+                        onClick={() => toast.promise(handleCreateStory(), {
+                            loading: "Creating story...",
+                            success: <p>Story created successfully!</p>,
+                            error: e => <p>{e.message}</p>
+                        })}
                         disabled={isCreating || (mode === "text" ? !text.trim() : !media)}
                         className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-white/10 disabled:text-white/40 disabled:cursor-not-allowed text-white font-medium py-3.5 rounded-xl transition-all flex justify-center items-center gap-2 pointer-events-auto"
                     >
