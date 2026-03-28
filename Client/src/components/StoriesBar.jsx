@@ -1,10 +1,13 @@
 import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { dummyStoriesData } from "../assets/assets";
+import StoryModal from "./StoryModal";
 
 
 const StoriesBar = () => {
     const [stories, setStories] = useState([]);
+    const [showStoryModal, setShowStoryModal] = useState(false);
+    const [viewStory, setViewStory] = useState(null)
     const scrollContainerRef = useRef(null);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(true);
@@ -55,7 +58,7 @@ const StoriesBar = () => {
                 className="flex gap-4 pb-5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth"
             >
                 {/*Add story */}
-                <div className="rounded-lg shadow-sm min-w-30 max-w-30 max-h-40 aspect-3/4 cursor-pointer hover:shadow-lg transition-all duration-200 border-2 border-dashed border-indigo-300 bg-linear-to-b from-indigo-100 to-white shrink-0">
+                <div onClick={() => setShowStoryModal(true)} className="rounded-lg shadow-sm min-w-30 max-w-30 max-h-40 aspect-3/4 cursor-pointer hover:shadow-lg transition-all duration-200 border-2 border-dashed border-indigo-300 bg-linear-to-b from-indigo-100 to-white shrink-0">
                     <div className="h-full flex flex-col items-center justify-center p-4">
                         <div className="size-10 bg-violet-700 rounded-full flex items-center justify-center mb-3">
                             <Plus className="w-5 h-5 text-white" />
@@ -87,6 +90,7 @@ const StoriesBar = () => {
                     </div>
                 ))}
             </div>
+            {showStoryModal && <StoryModal setShowStoryModal={setShowStoryModal} fetchStories={fetchStories} />}
         </div>
     )
 };
