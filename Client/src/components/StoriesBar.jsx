@@ -34,7 +34,7 @@ const StoriesBar = () => {
         scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
     };
     return (
-        <div className="relative w-screen sm:w-[calc(100vw-240px)] lg:max-w-2xl px-4 group/slider">
+        <div className="relative w-full sm:w-[calc(100vw-240px)] lg:max-w-2xl px-0 sm:px-4 group/slider">
             {showLeftArrow && (
                 <button
                     onClick={() => scroll("left")}
@@ -56,7 +56,7 @@ const StoriesBar = () => {
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className="flex gap-4 pb-5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth"
+                className="flex gap-4 pb-5 px-4 sm:px-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth"
             >
                 {/*Add story */}
                 <div onClick={() => setShowStoryModal(true)} className="rounded-lg shadow-sm min-w-30 max-w-30 max-h-40 aspect-3/4 cursor-pointer hover:shadow-lg transition-all duration-200 border-2 border-dashed border-indigo-300 bg-linear-to-b from-indigo-100 to-white shrink-0">

@@ -38,7 +38,7 @@ const PostCard = ({ post }) => {
         <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100/80 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-all duration-300">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                     <div className="w-11 h-11 shrink-0 rounded-full overflow-hidden border border-gray-100">
                         <img 
                             src={post.user.profile_picture} 
@@ -46,19 +46,19 @@ const PostCard = ({ post }) => {
                             className="w-full h-full object-cover"
                         />
                     </div>
-                    <div className="flex flex-col justify-center">
-                        <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-gray-900 text-[15px] leading-tight hover:underline cursor-pointer">
+                    <div className="flex flex-col justify-center min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="font-semibold text-gray-900 text-[15px] leading-tight hover:underline cursor-pointer truncate">
                                 {post.user.full_name}
                             </span>
                             {post.user.is_verified && (
-                                <BadgeCheck className="w-[18px] h-[18px] text-blue-500" fill="currentColor" stroke="white" strokeWidth={1.5} />
+                                <BadgeCheck className="w-[18px] h-[18px] text-blue-500 shrink-0" fill="currentColor" stroke="white" strokeWidth={1.5} />
                             )}
                         </div>
-                        <div className="flex items-center text-[13px] text-gray-500 mt-0.5">
-                            <span className="hover:text-gray-700 cursor-pointer transition-colors">@{post.user.username}</span>
-                            <span className="mx-1.5 text-gray-300">•</span>
-                            <span>{getTimeAgo(post.createdAt)}</span>
+                        <div className="flex items-center text-[13px] text-gray-500 mt-0.5 min-w-0">
+                            <span className="hover:text-gray-700 cursor-pointer transition-colors truncate">@{post.user.username}</span>
+                            <span className="mx-1.5 text-gray-300 shrink-0">•</span>
+                            <span className="shrink-0">{getTimeAgo(post.createdAt)}</span>
                         </div>
                     </div>
                 </div>
@@ -75,7 +75,7 @@ const PostCard = ({ post }) => {
             {/* Content */}
             {post.content && (
                 <div 
-                    className="mt-3.5 text-gray-800 text-[15px] sm:text-base whitespace-pre-wrap leading-relaxed"
+                    className="mt-3.5 text-gray-800 text-[15px] sm:text-base whitespace-pre-wrap leading-relaxed break-all"
                     dangerouslySetInnerHTML={{ __html: postWithMentions }}
                 />
             )}
