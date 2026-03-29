@@ -12,7 +12,7 @@ const Layout = () => {
     return user ? (
         <div className='w-full flex h-screen'>
             <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-            <div className='flex-1 bg-slate-100'>
+            <div className='flex-1 bg-slate-100 min-w-0 h-full flex flex-col'>
                 <Suspense fallback={<Loading />}>
                     <Outlet />
                 </Suspense>
