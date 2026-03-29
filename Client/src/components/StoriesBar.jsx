@@ -8,7 +8,7 @@ import StoryViewer from "./StoryViewer";
 const StoriesBar = () => {
     const [stories, setStories] = useState([]);
     const [showStoryModal, setShowStoryModal] = useState(false);
-    const [viewStory, setViewStory] = useState(null)
+    const [viewStoryIndex, setViewStoryIndex] = useState(null)
     const scrollContainerRef = useRef(null);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(true);
@@ -69,7 +69,7 @@ const StoriesBar = () => {
                 </div>
                 {/*map through stories */}
                 {stories.map((story, index) => (
-                    <div onClick={() => setViewStory(story)} key={story._id || index} className="relative rounded-lg shadow-sm min-w-30 max-w-30 max-h-40 aspect-3/4 cursor-pointer hover:shadow-lg transition-all duration-200 overflow-hidden group shrink-0">
+                    <div onClick={() => setViewStoryIndex(index)} key={story._id || index} className="relative rounded-lg shadow-sm min-w-30 max-w-30 max-h-40 aspect-3/4 cursor-pointer hover:shadow-lg transition-all duration-200 overflow-hidden group shrink-0">
                         {story.media_type === "image" && (
                             <img src={story.media_url} alt="story" className="w-full h-full object-cover" />
                         )}
@@ -94,7 +94,7 @@ const StoriesBar = () => {
             {/* ADD story modal */}
             {showStoryModal && <StoryModal setShowStoryModal={setShowStoryModal} fetchStories={fetchStories} />}
             {/*view story modal */}
-            {viewStory && <StoryViewer viewStory={viewStory} setViewStory={setViewStory} />}
+            {viewStoryIndex !== null && <StoryViewer stories={stories} currentIndex={viewStoryIndex} setViewStory={setViewStoryIndex} />}
         </div>
     )
 };
