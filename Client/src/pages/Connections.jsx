@@ -44,21 +44,23 @@ const Connections = () => {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-2 sm:gap-6 border-b border-slate-200 mb-6 overflow-x-auto no-scrollbar">
-                    {dataArry.map((tab) => (
-                        <button
-                            key={tab.label}
-                            onClick={() => setCurrentTab(tab.label)}
-                            className={`flex items-center gap-2 pb-3 px-2 text-[13px] md:text-sm font-semibold whitespace-nowrap transition-colors ${
-                                currentTab === tab.label
-                                    ? 'text-slate-900 border-b-2 border-slate-900'
-                                    : 'text-slate-500 hover:text-slate-700'
-                            }`}
-                        >
-                            <tab.icon className="w-4 h-4 md:w-[18px] md:h-[18px]" />
-                            {tab.label}
-                        </button>
-                    ))}
+                <div className="w-full mb-6 border-b border-slate-200 shrink-0">
+                    <div className="flex gap-2 sm:gap-6 overflow-x-auto no-scrollbar min-h-[44px]">
+                        {dataArry.map((tab) => (
+                            <button
+                                key={tab.label}
+                                onClick={() => setCurrentTab(tab.label)}
+                                className={`shrink-0 flex items-center gap-2 pb-3 px-2 text-[13px] md:text-sm font-semibold whitespace-nowrap transition-colors border-b-2 ${
+                                    currentTab === tab.label
+                                        ? 'text-slate-900 border-slate-900'
+                                        : 'text-slate-500 hover:text-slate-700 border-transparent'
+                                }`}
+                            >
+                                <tab.icon className="w-4 h-4 md:w-[18px] md:h-[18px]" />
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Connection Grids */}
