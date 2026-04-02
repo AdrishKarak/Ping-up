@@ -37,7 +37,7 @@ const UserProfileinfo = ({ user, profileId, posts, setShowEditProfile }) => {
                                 </h1>
                                 {user.is_verified && (
                                     <BadgeCheck
-                                        className="h-5 w-5 shrink-0 text-blue-500 sm:h-[22px] sm:w-[22px]"
+                                        className="h-5 w-5 shrink-0 mt-4 text-blue-500 sm:h-[22px] sm:w-[22px]"
                                         fill="currentColor"
                                         stroke="white"
                                         strokeWidth={1.5}
