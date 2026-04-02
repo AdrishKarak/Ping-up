@@ -15,10 +15,15 @@ const StoryViewer = ({ stories, currentIndex, setViewStory }) => {
     const videoRef = useRef(null);
     const startTimeRef = useRef(null);
     const pausedProgressRef = useRef(0);
+    const progressRef = useRef(0);
 
     const currentStory = stories[activeIndex];
     const hasPrev = activeIndex > 0;
     const hasNext = activeIndex < stories.length - 1;
+
+    useEffect(() => {
+        progressRef.current = progress;
+    }, [progress]);
 
     const handleClose = useCallback(() => {
         setIsClosing(true);
@@ -75,7 +80,7 @@ const StoryViewer = ({ stories, currentIndex, setViewStory }) => {
         if (currentStory.media_type === "video") return;
 
         if (isPaused) {
-            pausedProgressRef.current = progress;
+            pausedProgressRef.current = progressRef.current;
             if (progressTimerRef.current) {
                 clearInterval(progressTimerRef.current);
                 progressTimerRef.current = null;

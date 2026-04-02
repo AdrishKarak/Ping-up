@@ -54,7 +54,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
                                         }`
                                     }
                                 >
-                                    <Icon className="w-5 h-5" />
+                                    {React.createElement(Icon, { className: "w-5 h-5" })}
                                     <span>{label}</span>
                                 </NavLink>
                             </li>

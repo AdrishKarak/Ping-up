@@ -1,9 +1,8 @@
 import { ArrowLeft, Type, Image as ImageIcon, Send, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { dummyStoriesData, dummyUserData } from "../assets/assets";
 import toast from "react-hot-toast";
 
-const StoryModal = ({ setShowStoryModal, fetchStories }) => {
+const StoryModal = ({ setShowStoryModal }) => {
     const bgcolors = ["#4f46e5", "#7c3aed", "#db2777", "#e11d48", "#ca8a04", "#0d9488", "#222222"]
 
     const [mode, setMode] = useState("text");
@@ -11,7 +10,7 @@ const StoryModal = ({ setShowStoryModal, fetchStories }) => {
     const [text, setText] = useState("");
     const [media, setMedia] = useState(null);
     const [previwUrl, setPreviewUrl] = useState(null);
-    const [isCreating, setIsCreating] = useState(false);
+    const [isCreating] = useState(false);
 
     const handleMediaChange = (e) => {
         const file = e.target.files?.[0];
