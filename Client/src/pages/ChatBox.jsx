@@ -1,16 +1,32 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { dummyMessagesData, dummyUserData } from '../assets/assets';
+import { dummyMessagesData, dummyUserData, dummyConnectionsData } from '../assets/assets';
 import { ArrowLeft, ImagePlus, Send, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const ChatBox = () => {
+    const { userid } = useParams();
+
+
+    // Find the chat partner from connections using the route param
+    const chatUser = dummyConnectionsData.find(u => u._id === userid) || dummyUserData;
+
+    // Show all dummy messages in every chat (backend will handle real filtering)
     const messages = dummyMessagesData;
+
     const [text, setText] = useState("");
     const [image, setImage] = useState(null);
-    const [user, setUser] = useState(dummyUserData);
+    const [user, setUser] = useState(chatUser);
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const navigate = useNavigate();
+
+    // Update user when the route param changes
+    useEffect(() => {
+        const foundUser = dummyConnectionsData.find(u => u._id === userid);
+        if (foundUser) {
+            setUser(foundUser);
+        }
+    }, [userid]);
 
     const sendMessage = async () => {
         //will make this after making backend . Dont touch this AI

@@ -5,6 +5,7 @@ import Loading from '../components/Loading';
 import UserProfileinfo from '../components/UserProfileinfo';
 import PostCard from '../components/PostCard';
 import { Heart, ImageIcon, MessageSquareText } from 'lucide-react';
+import ProfileModal from '../components/ProfileModal';
 
 const TABS = [
     { key: "posts", label: "Posts" },
@@ -169,17 +170,7 @@ const Profile = () => {
             </div>
             {
                 showEditProfile && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                        <div className="bg-white p-8 rounded-2xl shadow-xl flex flex-col items-center gap-4">
-                            <p className="text-xl font-bold text-gray-800">Edit Profile Modal</p>
-                            <button 
-                                onClick={() => setShowEditProfile(false)}
-                                className="px-5 py-2 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors"
-                            >
-                                Close
-                            </button>
-                        </div>
-                    </div>
+                    <ProfileModal setShowEditProfile={setShowEditProfile} />
                 )
             }
 
