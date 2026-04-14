@@ -9,12 +9,23 @@ import Discover from "./pages/Discover.jsx";
 import Profile from "./pages/Profile.jsx";
 import CreatePost from "./pages/CreatePost.jsx";
 import Layout from "./pages/Layout.jsx"
-import { useUser } from '@clerk/react';
+import { useUser, useAuth } from '@clerk/react';
 import Loading from "./components/Loading.jsx";
 import { Toaster } from 'react-hot-toast';
+import { useEffect } from 'react';
 
 const App = () => {
     const { user, isLoaded } = useUser();
+    const { getToken } = useAuth();
+
+    useEffect(() => {
+        if (user) {
+            getToken().then((token) => {
+                console.log(token);
+            });
+        }
+    }, [user]);
+
     if (!isLoaded) return <Loading />;
     return (
         <div>
