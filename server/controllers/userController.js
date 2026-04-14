@@ -178,9 +178,14 @@ export const sendConnectionRequest = async (req, res) => {
         const { userId } = req.auth();
         const { id } = req.body;
 
+        //Prevent self-connection
+        if (userId === id) {
+            return res.status(400).json({ success: false, message: "You cannot send a connection request to yourself" });
+        }
+
         //Check if user has sent more than 20 connection requests in the last 24 hours
         const last24hrs = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        const connectionRequests = await Connection.find({ from_user_id: userId, created_at: { $gt: last24hrs } })
+        const connectionRequests = await Connection.find({ from_user_id: userId, createdAt: { $gt: last24hrs } })
 
         if (connectionRequests.length >= 20) {
             return res.status(400).json({ success: false, message: "You have sent more than 20 connection requests in the last 24 hours" });
@@ -201,11 +206,78 @@ export const sendConnectionRequest = async (req, res) => {
             })
 
             return res.status(200).json({ success: true, message: "Connection request sent successfully" });
-        } else if (connection?.status === 'accepted') {
+        }
+
+        if (connection.status === 'accepted') {
             return res.status(400).json({ success: false, message: "You are already connected with this user" });
         }
 
         return res.status(400).json({ success: false, message: "Connection request already sent and pending" });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+//Accept Connection Request
+export const acceptConnectionRequest = async (req, res) => {
+    try {
+        const { userId } = req.auth();
+        const { connectionId } = req.body;
+
+        const connection = await Connection.findById(connectionId);
+
+        if (!connection) {
+            return res.status(404).json({ success: false, message: "Connection request not found" });
+        }
+
+        //Only the receiver can accept
+        if (connection.to_user_id !== userId) {
+            return res.status(403).json({ success: false, message: "You are not authorized to accept this request" });
+        }
+
+        if (connection.status === 'accepted') {
+            return res.status(400).json({ success: false, message: "Connection already accepted" });
+        }
+
+        connection.status = 'accepted';
+        await connection.save();
+
+        //Update connections array on both users
+        await User.findByIdAndUpdate(connection.from_user_id, { $addToSet: { connections: connection.to_user_id } });
+        await User.findByIdAndUpdate(connection.to_user_id, { $addToSet: { connections: connection.from_user_id } });
+
+        return res.status(200).json({ success: true, message: "Connection request accepted" });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+//Reject / Cancel Connection Request
+export const rejectConnectionRequest = async (req, res) => {
+    try {
+        const { userId } = req.auth();
+        const { connectionId } = req.body;
+
+        const connection = await Connection.findById(connectionId);
+
+        if (!connection) {
+            return res.status(404).json({ success: false, message: "Connection request not found" });
+        }
+
+        //Either party can reject/cancel
+        if (connection.from_user_id !== userId && connection.to_user_id !== userId) {
+            return res.status(403).json({ success: false, message: "You are not authorized to reject this request" });
+        }
+
+        //If it was already accepted, also remove from connections arrays
+        if (connection.status === 'accepted') {
+            await User.findByIdAndUpdate(connection.from_user_id, { $pull: { connections: connection.to_user_id } });
+            await User.findByIdAndUpdate(connection.to_user_id, { $pull: { connections: connection.from_user_id } });
+        }
+
+        await Connection.findByIdAndDelete(connectionId);
+
+        return res.status(200).json({ success: true, message: "Connection request removed" });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
