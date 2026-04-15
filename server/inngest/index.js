@@ -1,5 +1,7 @@
 import { Inngest } from "inngest";
 import User from "../models/User.js";
+import Connection from "../models/Connection.js";
+import sendEmail from "../configs/nodeMailer.js";
 
 // Create a client to send and receive events
 export const inngest = new Inngest({ id: "Ping-up-app" });
@@ -8,6 +10,7 @@ export const inngest = new Inngest({ id: "Ping-up-app" });
 const syncUserCreation = inngest.createFunction(
     {
         id: 'sync-user-from-clerk',
+        retries: 2,
         triggers: [{ event: 'clerk/user.created' }]
     },
     async ({ event }) => {
@@ -15,8 +18,8 @@ const syncUserCreation = inngest.createFunction(
 
         let username = email_addresses[0].email_address.split('@')[0];
 
-        const user = await User.findOne({ username });
-        if (user) {
+        // Loop to guarantee a unique username
+        while (await User.findOne({ username })) {
             username = `${username}${Math.floor(Math.random() * 10000)}`;
         }
 
@@ -27,8 +30,6 @@ const syncUserCreation = inngest.createFunction(
             profile_picture: image_url,
             username
         });
-
-        console.log("✅ User created:", id);
     }
 );
 
@@ -36,6 +37,7 @@ const syncUserCreation = inngest.createFunction(
 const syncUserUpdation = inngest.createFunction(
     {
         id: 'update-user-from-clerk',
+        retries: 2,
         triggers: [{ event: 'clerk/user.updated' }]
     },
     async ({ event }) => {
@@ -49,19 +51,71 @@ const syncUserUpdation = inngest.createFunction(
     }
 );
 
-// Inngest function to delete user data in a database
+// Inngest function to delete user data and clean up references
 const syncUserDeletion = inngest.createFunction(
     {
         id: 'delete-user-with-clerk',
+        retries: 2,
         triggers: [{ event: 'clerk/user.deleted' }]
     },
     async ({ event }) => {
-        await User.findByIdAndDelete(event.data.id);
+        const deletedId = event.data.id;
+
+        // Remove the user document
+        await User.findByIdAndDelete(deletedId);
+
+        // Clean up all connections involving this user
+        await Connection.deleteMany({
+            $or: [{ from_user_id: deletedId }, { to_user_id: deletedId }]
+        });
+
+        // Remove from other users' followers, following, and connections arrays
+        await User.updateMany(
+            {},
+            { $pull: { followers: deletedId, following: deletedId, connections: deletedId } }
+        );
     }
 );
+
+
+// Inngest function to send reminder when a new connection request is sent
+const sendConnectionRequestReminder = inngest.createFunction(
+    {
+        id: "send-new-connection-request-reminder",
+        retries: 2,
+        triggers: [{ event: "app/connection-request" }]
+    },
+    async ({ event, step }) => {
+        const { connectionId } = event.data;
+
+        await step.run('send-connection-request-mail', async () => {
+            const connection = await Connection.findById(connectionId).populate('from_user_id to_user_id');
+
+            if (!connection) {
+                console.warn(`Connection ${connectionId} not found, skipping email.`);
+                return;
+            }
+
+            const subject = `New Connection Request from ${connection.from_user_id.full_name}`;
+            const body = `<div>
+        <p>Hello ${connection.to_user_id.full_name}</p>
+        <p>${connection.from_user_id.full_name} has sent you a connection request</p>
+        <p>You can view the connection request <a href="${process.env.FRONTEND_URL}/connections">here</a></p>
+        </div>`;
+
+            await sendEmail({
+                to: connection.to_user_id.email,
+                subject,
+                body
+            });
+        });
+    }
+);
+
 
 export const functions = [
     syncUserCreation,
     syncUserUpdation,
-    syncUserDeletion
+    syncUserDeletion,
+    sendConnectionRequestReminder
 ];
