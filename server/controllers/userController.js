@@ -218,67 +218,49 @@ export const sendConnectionRequest = async (req, res) => {
     }
 };
 
+//Get USer Connections
+export const getUserConnections = async (req, res) => {
+    try {
+        const { userId } = req.auth()
+        const user = await User.findById(userId).populate('connections followers following')
+
+        const connections = user.connections
+        const followers = user.followers
+        const following = user.following
+
+        const pendingConnections = (await Connection.find({ to_user_id: userId, status: 'pending' }).populate('from_user_id')).map(connection => connection.from_user_id)
+
+        return res.status(200).json({ success: true, connections, followers, following, pendingConnections });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}
+
 //Accept Connection Request
 export const acceptConnectionRequest = async (req, res) => {
     try {
-        const { userId } = req.auth();
-        const { connectionId } = req.body;
+        const { userId } = req.auth()
+        const { id } = req.body
 
-        const connection = await Connection.findById(connectionId);
+        const connection = await Connection.findOne({ from_user_id: id, to_user_id: userId })
 
         if (!connection) {
-            return res.status(404).json({ success: false, message: "Connection request not found" });
+            return res.status(400).json({ success: false, message: "No connection request found" })
         }
 
-        //Only the receiver can accept
-        if (connection.to_user_id !== userId) {
-            return res.status(403).json({ success: false, message: "You are not authorized to accept this request" });
-        }
+        const user = await User.findById(userId);
+        user.connections.push(id);
+        await user.save()
 
-        if (connection.status === 'accepted') {
-            return res.status(400).json({ success: false, message: "Connection already accepted" });
-        }
+        const toUser = await User.findById(id);
+        toUser.connections.push(userId);;
+        await toUser.save();
 
-        connection.status = 'accepted';
-        await connection.save();
+        connection.status = 'accepted'
+        await connection.save()
 
-        //Update connections array on both users
-        await User.findByIdAndUpdate(connection.from_user_id, { $addToSet: { connections: connection.to_user_id } });
-        await User.findByIdAndUpdate(connection.to_user_id, { $addToSet: { connections: connection.from_user_id } });
-
-        return res.status(200).json({ success: true, message: "Connection request accepted" });
+        return res.status(200).json({ success: true, message: "Connection request accepted successfully" })
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
-};
-
-//Reject / Cancel Connection Request
-export const rejectConnectionRequest = async (req, res) => {
-    try {
-        const { userId } = req.auth();
-        const { connectionId } = req.body;
-
-        const connection = await Connection.findById(connectionId);
-
-        if (!connection) {
-            return res.status(404).json({ success: false, message: "Connection request not found" });
-        }
-
-        //Either party can reject/cancel
-        if (connection.from_user_id !== userId && connection.to_user_id !== userId) {
-            return res.status(403).json({ success: false, message: "You are not authorized to reject this request" });
-        }
-
-        //If it was already accepted, also remove from connections arrays
-        if (connection.status === 'accepted') {
-            await User.findByIdAndUpdate(connection.from_user_id, { $pull: { connections: connection.to_user_id } });
-            await User.findByIdAndUpdate(connection.to_user_id, { $pull: { connections: connection.from_user_id } });
-        }
-
-        await Connection.findByIdAndDelete(connectionId);
-
-        return res.status(200).json({ success: true, message: "Connection request removed" });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-};
+}
