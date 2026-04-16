@@ -1,6 +1,7 @@
 import imagekit from "../configs/imagekit.js";
 import { toFile } from "@imagekit/nodejs";
 import User from "../models/User.js";
+import Post from "../models/Post.js";
 import Connection from "../models/Connection.js";
 import { inngest } from "../inngest/index.js";
 import fs from "fs";
@@ -209,7 +210,7 @@ export const sendConnectionRequest = async (req, res) => {
             // Fire Inngest event to send email reminder
             await inngest.send({
                 name: "app/connection-request",
-                data: { connectionId: newConnection._id.toString() }
+                data: { connectionId: newConnection._id }
             });
 
             return res.status(200).json({ success: true, message: "Connection request sent successfully" });
@@ -267,6 +268,23 @@ export const acceptConnectionRequest = async (req, res) => {
         await connection.save()
 
         return res.status(200).json({ success: true, message: "Connection request accepted successfully" })
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+//Get User Profile
+export const getUserProfile = async (req, res) => {
+    try {
+        const { profileId } = req.body;
+        const profile = await User.findById(profileId);
+
+        if (!profile) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        const posts = await Post.find({ user: profileId }).populate('user')
+        return res.status(200).json({ success: true, profile, posts });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
