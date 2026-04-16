@@ -8,7 +8,7 @@ import imagekit from '../configs/imagekit.js';
 //Add User Story
 export const addStory = async (req, res) => {
     try {
-        const { userId } = req.auth;
+        const { userId } = await req.auth();
         const { content, media_type, background_color } = req.body;
         const media = req.file;
         let media_url = ''
@@ -40,7 +40,7 @@ export const addStory = async (req, res) => {
             }
         }
 
-        if (fs.existsSync(media.path)) {
+        if (media && media.path && fs.existsSync(media.path)) {
             fs.unlinkSync(media.path);
         }
 
@@ -51,12 +51,12 @@ export const addStory = async (req, res) => {
             media_type,
             background_color,
             media_urls: media_url ? [media_url] : []
-        })
+        });
 
         //Schedule story deletion after 24 hours
         await inngest.send({
             name: 'app/story.delete',
-            data: { storyId: story._id }
+            data: { storyId: story._id.toString() }
         })
 
         return res.status(201).json({ success: true, message: "Story added successfully", story });
@@ -68,7 +68,7 @@ export const addStory = async (req, res) => {
 //Get User Story
 export const getStories = async (req, res) => {
     try {
-        const { userId } = req.auth;
+        const { userId } = await req.auth();
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
