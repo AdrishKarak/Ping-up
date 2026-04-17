@@ -3,9 +3,17 @@ import User from "../models/User.js";
 import Connection from "../models/Connection.js";
 import sendEmail from "../configs/nodeMailer.js";
 import Story from "../models/Story.js";
+import Message from "../models/Message.js";
 
 // Create a client to send and receive events
 export const inngest = new Inngest({ id: "Ping-up-app" });
+
+const escapeHtml = (value = '') => value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
 // Inngest function to create user and save user data to a database
 const syncUserCreation = inngest.createFunction(
@@ -113,6 +121,51 @@ const sendConnectionRequestReminder = inngest.createFunction(
     }
 );
 
+// Inngest function to send an email when a new message is sent
+const sendNewMessageEmail = inngest.createFunction(
+    {
+        id: "send-new-message-email",
+        retries: 2,
+        triggers: [{ event: "app/message.sent" }]
+    },
+    async ({ event, step }) => {
+        const { messageId } = event.data;
+
+        await step.run('send-new-message-mail', async () => {
+            const message = await Message.findById(messageId).populate('from_user_id to_user_id');
+
+            if (!message) {
+                console.warn(`Message ${messageId} not found, skipping email.`);
+                return;
+            }
+
+            if (!message.from_user_id || !message.to_user_id) {
+                console.warn(`Message ${messageId} has missing user data, skipping email.`);
+                return;
+            }
+
+            const senderName = escapeHtml(message.from_user_id.full_name);
+            const receiverName = escapeHtml(message.to_user_id.full_name);
+            const previewText = message.message_type === 'image'
+                ? 'sent you an image.'
+                : `sent you a message: "${escapeHtml(message.text)}"`;
+
+            const subject = `New Message from ${message.from_user_id.full_name}`;
+            const body = `<div>
+        <p>Hello ${receiverName}</p>
+        <p>${senderName} ${previewText}</p>
+        <p>You can view the message <a href="${process.env.FRONTEND_URL}/messages">here</a></p>
+        </div>`;
+
+            await sendEmail({
+                to: message.to_user_id.email,
+                subject,
+                body
+            });
+        });
+    }
+);
+
 //Inngest Function to delete a story after 24 hours
 const deleteStory = inngest.createFunction(
     {
@@ -138,5 +191,6 @@ export const functions = [
     syncUserUpdation,
     syncUserDeletion,
     sendConnectionRequestReminder,
+    sendNewMessageEmail,
     deleteStory
 ];

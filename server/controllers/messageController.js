@@ -2,6 +2,7 @@ import fs from 'fs';
 import Message from '../models/Message.js';
 import imagekit from '../configs/imagekit.js';
 import { toFile } from '@imagekit/nodejs';
+import { inngest } from '../inngest/index.js';
 
 //Create an empty object to store ss event Connections
 const connectedClients = {};
@@ -90,6 +91,11 @@ export const sendMessage = async (req, res) => {
         if (connectedClients[to_user_id]) {
             connectedClients[to_user_id].write(`data: ${JSON.stringify(messageWithUserData)}\n\n`);
         }
+
+        await inngest.send({
+            name: "app/message.sent",
+            data: { messageId: message._id }
+        });
 
         return res.status(201).json({ success: true, message });
     } catch (error) {
