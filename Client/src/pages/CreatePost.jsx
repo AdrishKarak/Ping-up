@@ -5,9 +5,11 @@ import { useSelector } from 'react-redux';
 import { useAuth } from '@clerk/react';
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 
 const CreatePost = () => {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [content, setContent] = useState("");
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -40,6 +42,9 @@ const CreatePost = () => {
             });
 
             if (data.success) {
+                // Invalidate feed query to force refresh
+                queryClient.invalidateQueries({ queryKey: ['feed'] });
+                
                 toast.success(data.message || "Post created successfully", { id: loadingToast });
                 setContent("");
                 setImages([]);

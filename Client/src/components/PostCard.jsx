@@ -6,6 +6,8 @@ import { useAuth } from "@clerk/react";
 import toast from "react-hot-toast";
 import api from "../api/axios";
 import { motion, AnimatePresence } from "framer-motion";
+import CommentModal from "./CommentModal";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Custom confirmation modal — replaces window.confirm()
 const DeleteModal = ({ onConfirm, onCancel, isDeleting }) => (
@@ -49,31 +51,42 @@ const PostCard = ({ post, onDelete }) => {
     const postWithMentions = postWithHasTags.replace(/(@\w+)/g, '<span class="text-blue-500 dark:text-blue-400 font-medium hover:underline cursor-pointer">$1</span>');
 
     const [likes, setLikes] = useState(post.likes_count?.length || 0);
+    const [commentCount, setCommentCount] = useState(post.comments_count || 0);
     const [isLiked, setIsLiked] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showCommentModal, setShowCommentModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const currentUser = useSelector((state) => state.user.value);
     const { getToken } = useAuth();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
 
     useEffect(() => {
         setLikes(post.likes_count?.length || 0);
+        setCommentCount(post.comments_count || 0);
         setIsLiked(post.likes_count?.includes(currentUser?._id) || false);
-    }, [post.likes_count, currentUser?._id]);
+    }, [post.likes_count, post.comments_count, currentUser?._id]);
 
     const handleLike = async () => {
         const previousLiked = isLiked;
         const previousLikes = likes;
+        
+        // Optimistic Update
         setIsLiked(!previousLiked);
         setLikes(previousLiked ? Math.max(previousLikes - 1, 0) : previousLikes + 1);
+        
         try {
             const token = await getToken();
             const { data } = await api.post('/api/post/like', { postId: post._id }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!data.success) throw new Error(data.message);
+            
+            // Invalidate feed query to sync with server in background
+            queryClient.invalidateQueries({ queryKey: ['feed'] });
         } catch (error) {
+            // Revert on error
             setIsLiked(previousLiked);
             setLikes(previousLikes);
             toast.error(error.response?.data?.message || error.message || "Failed to update like");
@@ -92,9 +105,8 @@ const PostCard = ({ post, onDelete }) => {
                 setShowDeleteModal(false);
                 if (onDelete) {
                     onDelete(post._id);
-                } else {
-                    window.location.reload();
                 }
+                queryClient.invalidateQueries({ queryKey: ['feed'] });
             } else {
                 throw new Error(data.message);
             }
@@ -141,6 +153,16 @@ const PostCard = ({ post, onDelete }) => {
                         onConfirm={handleDelete}
                         onCancel={() => setShowDeleteModal(false)}
                         isDeleting={isDeleting}
+                    />
+                )}
+                {showCommentModal && (
+                    <CommentModal 
+                        postId={post._id} 
+                        onClose={() => setShowCommentModal(false)} 
+                        onCommentAdded={() => {
+                            setCommentCount(prev => prev + 1);
+                            queryClient.invalidateQueries({ queryKey: ['feed'] });
+                        }}
                     />
                 )}
             </AnimatePresence>
@@ -201,10 +223,14 @@ const PostCard = ({ post, onDelete }) => {
                         </div>
                         <span className={`text-[15px] font-medium ${isLiked ? '' : 'group-hover:text-red-500'}`}>{likes}</span>
                     </button>
-                    <button className="flex items-center gap-2 text-gray-500 hover:text-blue-500 transition-colors group dark:text-slate-400 dark:hover:text-blue-500">
+                    <button 
+                        onClick={() => setShowCommentModal(true)}
+                        className="flex items-center gap-2 text-gray-500 hover:text-blue-500 transition-colors group dark:text-slate-400 dark:hover:text-blue-500"
+                    >
                         <div className="p-1.5 rounded-full group-hover:bg-blue-50 transition-colors dark:group-hover:bg-blue-500/10">
                             <MessageCircle className="w-5 h-5 transition-transform duration-300 group-active:scale-75" />
                         </div>
+                        <span className="text-[15px] font-medium group-hover:text-blue-500">{commentCount}</span>
                     </button>
                     <button onClick={handleShare} className="flex items-center gap-2 text-gray-500 hover:text-green-500 transition-colors group dark:text-slate-400 dark:hover:text-green-500">
                         <div className="p-1.5 rounded-full group-hover:bg-green-50 transition-colors dark:group-hover:bg-green-500/10">

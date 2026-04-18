@@ -31,7 +31,9 @@ export const getUserData = async (req, res) => {
             try {
                 const cached = await redisClient.get(cacheKey);
                 if (cached) {
-                    return res.status(200).json(JSON.parse(cached));
+                    const data = JSON.parse(cached);
+                    data.user.isOnline = !!(await redisClient.get(`presence:${userId}`));
+                    return res.status(200).json(data);
                 }
             } catch (e) {
                 console.error("Redis get error", e);
@@ -43,11 +45,12 @@ export const getUserData = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        const responseData = { success: true, user };
+        const isOnline = redisClient.isReady ? !!(await redisClient.get(`presence:${userId}`)) : false;
+        const userWithPresence = { ...user.toObject(), isOnline };
+        const responseData = { success: true, user: userWithPresence };
 
         if (redisClient.isReady) {
             try {
-                // Cache user data for 10 minutes
                 await redisClient.setEx(cacheKey, 600, JSON.stringify(responseData));
             } catch (e) {
                 console.error("Redis set error", e);
@@ -334,7 +337,9 @@ export const getUserProfile = async (req, res) => {
             try {
                 const cached = await redisClient.get(cacheKey);
                 if (cached) {
-                    return res.status(200).json(JSON.parse(cached));
+                    const data = JSON.parse(cached);
+                    data.profile.isOnline = !!(await redisClient.get(`presence:${profileId}`));
+                    return res.status(200).json(data);
                 }
             } catch (e) {
                 console.error("Redis get error", e);
@@ -348,11 +353,13 @@ export const getUserProfile = async (req, res) => {
         }
 
         const posts = await Post.find({ user: profileId }).populate('user')
-        const responseData = { success: true, profile, posts };
+        
+        const isOnline = redisClient.isReady ? !!(await redisClient.get(`presence:${profileId}`)) : false;
+        const profileWithPresence = { ...profile.toObject(), isOnline };
+        const responseData = { success: true, profile: profileWithPresence, posts };
 
         if (redisClient.isReady) {
             try {
-                // Cache profile data for 15 minutes
                 await redisClient.setEx(cacheKey, 900, JSON.stringify(responseData));
             } catch (e) {
                 console.error("Redis set error", e);

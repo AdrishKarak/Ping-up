@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { assets } from '../assets/assets';
 import Loading from '../components/Loading';
 import StoriesBar from '../components/StoriesBar';
@@ -6,94 +6,45 @@ import PostCard from '../components/PostCard';
 import RecentMessage from '../components/RecentMessage';
 import { useAuth } from '@clerk/react';
 import api from '../api/axios';
-import toast from 'react-hot-toast';
-import { useSearchParams } from 'react-router-dom';
 import { PostSkeleton } from '../components/Skeletons';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useInfiniteQuery } from '@tanstack/react-query';
 
 const Feed = () => {
-    const [feeds, setFeeds] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
-    const [fetchingMore, setFetchingMore] = useState(false);
     const { getToken } = useAuth();
     const observerTarget = useRef(null);
-    const [searchParams] = useSearchParams();
-    const postIdParam = searchParams.get('postId');
 
-    const fetchFeeds = useCallback(async (pageNum) => {
-        try {
-            if (pageNum === 1) setLoading(true);
-            else setFetchingMore(true);
+    const fetchFeedPosts = async ({ pageParam = null }) => {
+        const token = await getToken();
+        const url = pageParam 
+            ? `/api/post/feed?cursor=${pageParam}&limit=10` 
+            : '/api/post/feed?limit=10';
+        
+        const { data } = await api.get(url, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return data;
+    };
 
-            const token = await getToken();
-
-            let specificPost = null;
-            if (pageNum === 1 && postIdParam) {
-                try {
-                    const { data: postData } = await api.get(`/api/post/${postIdParam}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    if (postData.success) {
-                        specificPost = postData.post;
-                    }
-                } catch (e) {
-                    console.log("Could not load specific post", e);
-                }
-            }
-
-            const { data } = await api.get(`/api/post/feed?page=${pageNum}&limit=10`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (data.success) {
-                setFeeds(prev => {
-                    let newPosts = data.posts || [];
-                    let combined = [];
-
-                    if (pageNum === 1) {
-                        if (specificPost) {
-                            combined = [specificPost, ...newPosts];
-                        } else {
-                            combined = newPosts;
-                        }
-                    } else {
-                        combined = [...prev, ...newPosts];
-                    }
-
-                    // Global deduplication to prevent double-rendering of same posts
-                    const uniquePosts = [];
-                    const seen = new Set();
-                    for (const p of combined) {
-                        if (!seen.has(p._id)) {
-                            seen.add(p._id);
-                            uniquePosts.push(p);
-                        }
-                    }
-                    return uniquePosts;
-                });
-                setHasMore(data.hasMore);
-            } else {
-                throw new Error(data.message);
-            }
-        } catch (error) {
-            toast.error(error.response?.data?.message || error.message || "Failed to load feed");
-        } finally {
-            setLoading(false);
-            setFetchingMore(false);
-        }
-    }, [getToken, postIdParam]);
-
-    useEffect(() => {
-        fetchFeeds(page);
-    }, [page, fetchFeeds]);
+    const {
+        data,
+        error,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        status,
+        refetch
+    } = useInfiniteQuery({
+        queryKey: ['feed'],
+        queryFn: fetchFeedPosts,
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
+    });
 
     useEffect(() => {
         const observer = new IntersectionObserver(
             entries => {
-                if (entries[0].isIntersecting && hasMore && !loading && !fetchingMore) {
-                    setPage(prev => prev + 1);
+                if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+                    fetchNextPage();
                 }
             },
             { threshold: 0.1 }
@@ -109,7 +60,11 @@ const Feed = () => {
                 observer.unobserve(currentTarget);
             }
         };
-    }, [hasMore, loading, fetchingMore]);
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+    if (status === 'error') return <div className="text-center py-20 text-red-500">Error: {error.message}</div>;
+
+    const allPosts = data?.pages.flatMap(page => page.posts) || [];
 
     return (
         <div className='h-full overflow-y-auto overflow-x-hidden no-scrollbar py-4 sm:py-8 lg:py-10 px-0 sm:px-6 md:px-8 lg:px-12 xl:px-4 flex items-start justify-center gap-6 lg:gap-10 xl:gap-20 2xl:gap-32'>
@@ -118,7 +73,7 @@ const Feed = () => {
             <div className='w-full max-w-full sm:max-w-[600px] md:max-w-[650px] lg:max-w-[720px] flex flex-col shrink-0 min-w-0'>
                 <StoriesBar />
                 <div className='px-4 sm:px-0 mt-2 space-y-4 sm:space-y-6 w-full box-border pb-10'>
-                    {loading ? (
+                    {status === 'pending' ? (
                         <>
                             <PostSkeleton />
                             <PostSkeleton />
@@ -126,27 +81,27 @@ const Feed = () => {
                         </>
                     ) : (
                         <AnimatePresence mode='popLayout'>
-                            {feeds.map((post) => (
+                            {allPosts.map((post) => (
                                 <PostCard 
                                     key={post._id} 
                                     post={post} 
-                                    onDelete={(postId) => setFeeds(prev => prev.filter(p => p._id !== postId))}
+                                    onDelete={() => refetch()} // Simply refetch to keep data in sync
                                 />
                             ))}
                         </AnimatePresence>
                     )}
                     
-                    {fetchingMore && (
+                    {isFetchingNextPage && (
                         <div className="space-y-4 sm:space-y-6">
                             <PostSkeleton />
                         </div>
                     )}
                     
-                    {hasMore && !loading && (
+                    {hasNextPage && (
                         <div ref={observerTarget} className="h-10 w-full pointer-events-none"></div>
                     )}
                     
-                    {!hasMore && feeds.length > 0 && (
+                    {!hasNextPage && allPosts.length > 0 && (
                         <p className="text-center text-slate-500 py-6 text-sm font-medium">No more posts to load.</p>
                     )}
                 </div>

@@ -14,6 +14,7 @@
   "dependencies": {
     "@clerk/express": "^2.1.0",
     "@imagekit/nodejs": "^7.5.0",
+    "compression": "^1.8.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.0",
     "express": "^5.2.1",

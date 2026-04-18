@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import api from '../api/axios';
 import Loading from '../components/Loading';
 import toast from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
 
 const ChatBox = () => {
     const { userid } = useParams();
@@ -15,36 +16,40 @@ const ChatBox = () => {
     const [text, setText] = useState("");
     const [image, setImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
-    const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const navigate = useNavigate();
 
+    // Use TanStack Query to manage the target user's status/profile
+    const { data: userData } = useQuery({
+        queryKey: ['user-profile', userid],
+        queryFn: async () => {
+            const token = await getToken();
+            const { data } = await api.post('/api/user/profiles', { profileId: userid }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            return data.profile;
+        },
+        refetchInterval: 30000, // Refetch every 30s to update "isOnline"
+        enabled: !!userid
+    });
+
+    const user = userData;
+
     useEffect(() => {
         const fetchChat = async () => {
             try {
                 const token = await getToken();
-                const [profileResponse, messagesResponse] = await Promise.all([
-                    api.post('/api/user/profiles', { profileId: userid }, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }),
-                    api.post('/api/message/get', { to_user_id: userid }, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    })
-                ]);
+                const { data } = await api.post('/api/message/get', { to_user_id: userid }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
 
-                if (profileResponse.data.success) {
-                    setUser(profileResponse.data.profile);
+                if (data.success) {
+                    setMessages([...(data.messages || [])].reverse());
                 } else {
-                    throw new Error(profileResponse.data.message);
-                }
-
-                if (messagesResponse.data.success) {
-                    setMessages([...(messagesResponse.data.messages || [])].reverse());
-                } else {
-                    throw new Error(messagesResponse.data.message);
+                    throw new Error(data.message);
                 }
             } catch (error) {
                 toast.error(error.response?.data?.message || error.message || "Failed to load chat");
@@ -180,13 +185,16 @@ const ChatBox = () => {
                     <h2 className="font-bold text-slate-800 text-[15px] sm:text-base leading-tight truncate dark:text-slate-100">
                         {user.full_name}
                     </h2>
-                    <p className="text-xs text-purple-400 truncate dark:text-purple-500">@{user.username}</p>
-                </div>
-
-                {/* Online indicator */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]"></span>
-                    <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Online</span>
+                    <div className="flex items-center gap-1.5">
+                        {user.isOnline ? (
+                            <>
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Online</span>
+                            </>
+                        ) : (
+                            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">Offline</span>
+                        )}
+                    </div>
                 </div>
             </div>
 
