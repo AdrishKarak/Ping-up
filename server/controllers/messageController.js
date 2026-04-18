@@ -3,9 +3,28 @@ import Message from '../models/Message.js';
 import imagekit from '../configs/imagekit.js';
 import { toFile } from '@imagekit/nodejs';
 import { inngest } from '../inngest/index.js';
+import { pubClient, subClient } from '../configs/redis.js';
 
 //Create an empty object to store ss event Connections
 const connectedClients = {};
+
+// Function to initialize Pub/Sub subscription
+export const initMessagePubSub = async () => {
+    if (!subClient.isReady) {
+        console.warn('Redis subClient not ready for subscription, retrying...');
+        return;
+    }
+    
+    await subClient.subscribe('MESSAGES', (message) => {
+        const data = JSON.parse(message);
+        const { to_user_id, messageWithUserData } = data;
+        
+        if (connectedClients[to_user_id]) {
+            connectedClients[to_user_id].write(`data: ${JSON.stringify(messageWithUserData)}\n\n`);
+        }
+    });
+    console.log('Message Pub/Sub initialized');
+};
 
 //Controller function for the sse endpoint
 export const sseController = (req, res) => {
@@ -85,11 +104,19 @@ export const sendMessage = async (req, res) => {
             media_url
         });
 
-        //Send message to the receiver using SSE
+        //Send message to the receiver using Redis Pub/Sub
         const messageWithUserData = await Message.findById(message._id).populate('from_user_id');
 
-        if (connectedClients[to_user_id]) {
-            connectedClients[to_user_id].write(`data: ${JSON.stringify(messageWithUserData)}\n\n`);
+        if (pubClient.isReady) {
+            await pubClient.publish('MESSAGES', JSON.stringify({
+                to_user_id,
+                messageWithUserData
+            }));
+        } else {
+            // Fallback for single instance if Redis is not ready
+            if (connectedClients[to_user_id]) {
+                connectedClients[to_user_id].write(`data: ${JSON.stringify(messageWithUserData)}\n\n`);
+            }
         }
 
         try {

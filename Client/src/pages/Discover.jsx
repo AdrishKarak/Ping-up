@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import UserCard from '../components/UserCard';
-import Loading from '../components/Loading';
 import { Search } from 'lucide-react';
 import { useAuth } from '@clerk/react';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
+import { UserCardSkeleton } from '../components/Skeletons';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Discover = () => {
     const [input, setInput] = useState("");
@@ -66,15 +67,28 @@ const Discover = () => {
                     />
                 </div>
 
-                {loading ? (
-                    <Loading height='60vh' />
-                ) : (
-                    <div className="flex flex-wrap gap-5 sm:gap-6 justify-center sm:justify-start pb-10">
-                        {users.map((user) => (
-                            <UserCard key={user._id} user={user} />
-                        ))}
-                    </div>
-                )}
+                <div className="flex flex-wrap gap-5 sm:gap-6 justify-center sm:justify-start pb-10">
+                    {loading ? (
+                        <>
+                            <UserCardSkeleton />
+                            <UserCardSkeleton />
+                            <UserCardSkeleton />
+                        </>
+                    ) : (
+                        <AnimatePresence>
+                            {users.map((user) => (
+                                <motion.div
+                                    key={user._id}
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <UserCard user={user} />
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                    )}
+                </div>
             </div>
         </div>
     );

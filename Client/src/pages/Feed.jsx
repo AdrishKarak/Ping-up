@@ -8,6 +8,8 @@ import { useAuth } from '@clerk/react';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
+import { PostSkeleton } from '../components/Skeletons';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Feed = () => {
     const [feeds, setFeeds] = useState([]);
@@ -109,20 +111,34 @@ const Feed = () => {
         };
     }, [hasMore, loading, fetchingMore]);
 
-    return !loading ? (
+    return (
         <div className='h-full overflow-y-auto overflow-x-hidden no-scrollbar py-4 sm:py-8 lg:py-10 px-0 sm:px-6 md:px-8 lg:px-12 xl:px-4 flex items-start justify-center gap-6 lg:gap-10 xl:gap-20 2xl:gap-32'>
 
             {/* Center column: stories and posts */}
             <div className='w-full max-w-full sm:max-w-[600px] md:max-w-[650px] lg:max-w-[720px] flex flex-col shrink-0 min-w-0'>
                 <StoriesBar />
                 <div className='px-4 sm:px-0 mt-2 space-y-4 sm:space-y-6 w-full box-border pb-10'>
-                    {feeds.map((post) => (
-                        <PostCard key={post._id} post={post} />
-                    ))}
+                    {loading ? (
+                        <>
+                            <PostSkeleton />
+                            <PostSkeleton />
+                            <PostSkeleton />
+                        </>
+                    ) : (
+                        <AnimatePresence mode='popLayout'>
+                            {feeds.map((post) => (
+                                <PostCard 
+                                    key={post._id} 
+                                    post={post} 
+                                    onDelete={(postId) => setFeeds(prev => prev.filter(p => p._id !== postId))}
+                                />
+                            ))}
+                        </AnimatePresence>
+                    )}
                     
                     {fetchingMore && (
-                        <div className="flex justify-center py-4">
-                            <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="space-y-4 sm:space-y-6">
+                            <PostSkeleton />
                         </div>
                     )}
                     
@@ -149,7 +165,7 @@ const Feed = () => {
                 <RecentMessage />
             </div>
         </div>
-    ) : <Loading />
+    );
 };
 
 export default Feed;

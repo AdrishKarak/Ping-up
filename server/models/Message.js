@@ -10,5 +10,6 @@ const messageSchema = new mongoose.Schema({
 }, { timestamps: true, minimize: false });
 
 const Message = mongoose.model('Message', messageSchema);
+Message.schema.index({ from_user_id: 1, to_user_id: 1, createdAt: -1 });
 
 export default Message;

@@ -9,5 +9,6 @@ const postSchema = new mongoose.Schema({
 }, { timestamps: true, minimize: false })
 
 const Post = mongoose.model('Post', postSchema)
+Post.schema.index({ user: 1, createdAt: -1 });
 
 export default Post;

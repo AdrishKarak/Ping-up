@@ -15,6 +15,7 @@ import { Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { fetchUser } from './features/user/userSlice.js';
+import { fetchConnections } from './features/connections/connectionSlice.js';
 import Notification from './components/Notification.jsx';
 import api from './api/axios.js';
 import { setLatestMessage } from './features/messages/messagesSlice.js';
@@ -35,6 +36,7 @@ const App = () => {
             if (user) {
                 const token = await getToken();
                 dispatch(fetchUser(token));
+                dispatch(fetchConnections(token));
             }
         }
         fetchData()

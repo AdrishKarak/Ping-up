@@ -5,10 +5,12 @@ import StoryViewer from "./StoryViewer";
 import { useAuth } from "@clerk/react";
 import api from "../api/axios";
 import toast from "react-hot-toast";
+import { StorySkeleton } from "./Skeletons";
 
 
 const StoriesBar = () => {
     const [stories, setStories] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [showStoryModal, setShowStoryModal] = useState(false);
     const [viewStoryIndex, setViewStoryIndex] = useState(null)
     const scrollContainerRef = useRef(null);
@@ -18,6 +20,7 @@ const StoriesBar = () => {
 
     const fetchStories = useCallback(async () => {
         try {
+            setLoading(true);
             const token = await getToken();
             const { data } = await api.get('/api/story/get', {
                 headers: { Authorization: `Bearer ${token}` }
@@ -30,6 +33,8 @@ const StoriesBar = () => {
             }
         } catch (error) {
             toast.error(error.response?.data?.message || error.message || "Failed to load stories");
+        } finally {
+            setLoading(false);
         }
     }, [getToken]);
 
@@ -84,28 +89,38 @@ const StoriesBar = () => {
                     </div>
                 </div>
                 {/*map through stories */}
-                {stories.map((story, index) => (
-                    <div onClick={() => setViewStoryIndex(index)} key={story._id || index} className="relative rounded-lg shadow-sm min-w-30 max-w-30 max-h-40 aspect-3/4 cursor-pointer hover:shadow-lg transition-all duration-200 overflow-hidden group shrink-0 dark:hover:shadow-none">
-                        {story.media_type === "image" && (
-                            <img src={story.media_urls?.[0]} alt="story" className="w-full h-full object-cover" />
-                        )}
-                        {story.media_type === "video" && (
-                            <video src={story.media_urls?.[0]} className="w-full h-full object-cover" />
-                        )}
-                        {story.media_type === "text" && (
-                            <div className="w-full h-full flex items-center justify-center p-2" style={{ backgroundColor: story.background_color }}>
-                                <p className="text-white text-xs text-center line-clamp-4">{story.content}</p>
-                            </div>
-                        )}
+                {loading ? (
+                    <>
+                        <StorySkeleton />
+                        <StorySkeleton />
+                        <StorySkeleton />
+                        <StorySkeleton />
+                        <StorySkeleton />
+                    </>
+                ) : (
+                    stories.map((story, index) => (
+                        <div onClick={() => setViewStoryIndex(index)} key={story._id || index} className="relative rounded-lg shadow-sm min-w-30 max-w-30 max-h-40 aspect-3/4 cursor-pointer hover:shadow-lg transition-all duration-200 overflow-hidden group shrink-0 dark:hover:shadow-none">
+                            {story.media_type === "image" && (
+                                <img src={story.media_urls?.[0]} alt="story" className="w-full h-full object-cover" />
+                            )}
+                            {story.media_type === "video" && (
+                                <video src={story.media_urls?.[0]} className="w-full h-full object-cover" />
+                            )}
+                            {story.media_type === "text" && (
+                                <div className="w-full h-full flex items-center justify-center p-2" style={{ backgroundColor: story.background_color }}>
+                                    <p className="text-white text-xs text-center line-clamp-4">{story.content}</p>
+                                </div>
+                            )}
 
-                        <div className="absolute top-2 left-2 ring-2 ring-indigo-500 rounded-full dark:ring-indigo-400">
-                            <img src={story.user.profile_picture} alt={story.user.full_name} className="w-8 h-8 rounded-full border-2 border-white object-cover dark:border-slate-900" />
+                            <div className="absolute top-2 left-2 ring-2 ring-indigo-500 rounded-full dark:ring-indigo-400">
+                                <img src={story.user.profile_picture} alt={story.user.full_name} className="w-8 h-8 rounded-full border-2 border-white object-cover dark:border-slate-900" />
+                            </div>
+                            <div className="absolute bottom-0 inset-x-0 bg-linear-to-t from-black/60 to-transparent p-2 pt-6">
+                                <p className="text-white text-xs font-medium truncate">{story.user.full_name}</p>
+                            </div>
                         </div>
-                        <div className="absolute bottom-0 inset-x-0 bg-linear-to-t from-black/60 to-transparent p-2 pt-6">
-                            <p className="text-white text-xs font-medium truncate">{story.user.full_name}</p>
-                        </div>
-                    </div>
-                ))}
+                    ))
+                )}
             </div>
             {/* ADD story modal */}
             {showStoryModal && <StoryModal setShowStoryModal={setShowStoryModal} fetchStories={fetchStories} />}

@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
-import { Heart, MessageCircle, Share2, BadgeCheck, Trash2, AlertTriangle } from "lucide-react";
+import { Heart, MessageCircle, Share2, BadgeCheck, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useAuth } from "@clerk/react";
 import toast from "react-hot-toast";
 import api from "../api/axios";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Custom confirmation modal — replaces window.confirm()
 const DeleteModal = ({ onConfirm, onCancel, isDeleting }) => (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 w-full max-w-sm dark:bg-slate-900 dark:border-slate-800 dark:shadow-none">
+        <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 w-full max-w-sm dark:bg-slate-900 dark:border-slate-800 dark:shadow-none"
+        >
             <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0 dark:bg-red-500/10">
                     <Trash2 className="w-5 h-5 text-red-500" strokeWidth={2} />
@@ -35,11 +40,11 @@ const DeleteModal = ({ onConfirm, onCancel, isDeleting }) => (
                     {isDeleting ? "Deleting..." : "Delete"}
                 </button>
             </div>
-        </div>
+        </motion.div>
     </div>
 );
 
-const PostCard = ({ post }) => {
+const PostCard = ({ post, onDelete }) => {
     const postWithHasTags = post.content.replace(/(#\w+)/g, '<span class="text-purple-600 dark:text-purple-400 font-medium hover:underline cursor-pointer">$1</span>');
     const postWithMentions = postWithHasTags.replace(/(@\w+)/g, '<span class="text-blue-500 dark:text-blue-400 font-medium hover:underline cursor-pointer">$1</span>');
 
@@ -85,7 +90,11 @@ const PostCard = ({ post }) => {
             if (data.success) {
                 toast.success(data.message);
                 setShowDeleteModal(false);
-                window.location.reload();
+                if (onDelete) {
+                    onDelete(post._id);
+                } else {
+                    window.location.reload();
+                }
             } else {
                 throw new Error(data.message);
             }
@@ -118,15 +127,23 @@ const PostCard = ({ post }) => {
     };
 
     return (
-        <>
+        <motion.div
+            layout
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.2 }}
+        >
             {/* Delete confirmation modal */}
-            {showDeleteModal && (
-                <DeleteModal
-                    onConfirm={handleDelete}
-                    onCancel={() => setShowDeleteModal(false)}
-                    isDeleting={isDeleting}
-                />
-            )}
+            <AnimatePresence>
+                {showDeleteModal && (
+                    <DeleteModal
+                        onConfirm={handleDelete}
+                        onCancel={() => setShowDeleteModal(false)}
+                        isDeleting={isDeleting}
+                    />
+                )}
+            </AnimatePresence>
 
             <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100/80 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-all duration-300 dark:bg-slate-900 dark:border-slate-800 dark:hover:shadow-none dark:shadow-none">
                 {/* Header */}
@@ -196,7 +213,7 @@ const PostCard = ({ post }) => {
                     </button>
                 </div>
             </div>
-        </>
+        </motion.div>
     );
 };
 

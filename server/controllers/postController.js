@@ -3,6 +3,19 @@ import imagekit from "../configs/imagekit.js";
 import { toFile } from "@imagekit/nodejs";
 import Post from "../models/Post.js";
 import User from "../models/User.js";
+import { redisClient } from '../configs/redis.js';
+
+const clearUserFeedCache = async (userId) => {
+    if (!redisClient.isReady) return;
+    try {
+        const keys = await redisClient.keys(`feed:${userId}:*`);
+        if (keys.length > 0) {
+            await redisClient.del(keys);
+        }
+    } catch (err) {
+        console.error("Cache clear error", err);
+    }
+};
 
 //Add Post
 export const addPost = async (req, res) => {
@@ -61,6 +74,8 @@ export const addPost = async (req, res) => {
             image_urls
         })
 
+        await clearUserFeedCache(userId);
+
         return res.status(200).json({ success: true, message: "Post created successfully" });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
@@ -74,6 +89,18 @@ export const getFeedPosts = async (req, res) => {
         const page = Math.max(parseInt(req.query.page) || 1, 1);
         const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 50);
         const skip = (page - 1) * limit;
+
+        const cacheKey = `feed:${userId}:page:${page}:limit:${limit}`;
+        if (redisClient.isReady) {
+            try {
+                const cached = await redisClient.get(cacheKey);
+                if (cached) {
+                    return res.status(200).json(JSON.parse(cached));
+                }
+            } catch (e) {
+                console.error("Redis get error", e);
+            }
+        }
 
         const user = await User.findById(userId);
         if (!user) {
@@ -116,7 +143,18 @@ export const getFeedPosts = async (req, res) => {
         const posts = [...priorityPosts, ...otherPosts];
         const hasMore = skip + posts.length < totalPostsCount;
 
-        return res.status(200).json({ success: true, posts, page, limit, hasMore });
+        const responseData = { success: true, posts, page, limit, hasMore };
+
+        if (redisClient.isReady) {
+            try {
+                // Cache feed for 5 minutes
+                await redisClient.setEx(cacheKey, 300, JSON.stringify(responseData));
+            } catch (e) {
+                console.error("Redis set error", e);
+            }
+        }
+
+        return res.status(200).json(responseData);
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
@@ -134,10 +172,12 @@ export const likePost = async (req, res) => {
         if (post.likes_count.includes(userId)) {
             post.likes_count = post.likes_count.filter(user => user !== userId)
             await post.save();
+            await clearUserFeedCache(userId);
             return res.status(200).json({ success: true, message: "Post unliked successfully" });
         } else {
             post.likes_count.push(userId);
             await post.save();
+            await clearUserFeedCache(userId);
             return res.status(200).json({ success: true, message: "Post liked successfully" });
         }
     } catch (error) {
@@ -160,6 +200,8 @@ export const deletePost = async (req, res) => {
         }
 
         await Post.findByIdAndDelete(req.params.id);
+
+        await clearUserFeedCache(userId);
 
         return res.status(200).json({ success: true, message: "Post deleted successfully" });
     } catch (error) {

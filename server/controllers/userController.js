@@ -5,6 +5,19 @@ import Post from "../models/Post.js";
 import Connection from "../models/Connection.js";
 import { inngest } from "../inngest/index.js";
 import fs from "fs";
+import { redisClient } from "../configs/redis.js";
+
+const clearUserProfileCache = async (profileId) => {
+    if (!redisClient.isReady) return;
+    try {
+        await Promise.all([
+            redisClient.del(`profile:${profileId}`),
+            redisClient.del(`user:${profileId}`)
+        ]);
+    } catch (err) {
+        console.error("Cache clear error", err);
+    }
+};
 
 
 
@@ -12,11 +25,36 @@ import fs from "fs";
 export const getUserData = async (req, res) => {
     try {
         const { userId } = await req.auth();
+
+        const cacheKey = `user:${userId}`;
+        if (redisClient.isReady) {
+            try {
+                const cached = await redisClient.get(cacheKey);
+                if (cached) {
+                    return res.status(200).json(JSON.parse(cached));
+                }
+            } catch (e) {
+                console.error("Redis get error", e);
+            }
+        }
+
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
-        return res.status(200).json({ success: true, user });
+
+        const responseData = { success: true, user };
+
+        if (redisClient.isReady) {
+            try {
+                // Cache user data for 10 minutes
+                await redisClient.setEx(cacheKey, 600, JSON.stringify(responseData));
+            } catch (e) {
+                console.error("Redis set error", e);
+            }
+        }
+
+        return res.status(200).json(responseData);
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
@@ -96,6 +134,7 @@ export const updateUserData = async (req, res) => {
         }
 
         const user = await User.findByIdAndUpdate(userId, updatedData, { new: true });
+        await clearUserProfileCache(userId);
         return res.status(200).json({ success: true, message: "User Profile updated successfully", user });
 
     } catch (error) {
@@ -147,6 +186,9 @@ export const followUser = async (req, res) => {
         toUser.followers.push(userId);
         await toUser.save();
 
+        await clearUserProfileCache(userId);
+        await clearUserProfileCache(id);
+
         return res.status(200).json({ success: true, message: "User followed successfully" });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
@@ -167,6 +209,9 @@ export const unfollowUser = async (req, res) => {
         const toUser = await User.findById(id);
         toUser.followers = toUser.followers.filter(followerId => followerId !== userId);
         await toUser.save();
+
+        await clearUserProfileCache(userId);
+        await clearUserProfileCache(id);
 
         return res.status(200).json({ success: true, message: "User unfollowed successfully" });
     } catch (error) {
@@ -267,6 +312,9 @@ export const acceptConnectionRequest = async (req, res) => {
         connection.status = 'accepted'
         await connection.save()
 
+        await clearUserProfileCache(userId);
+        await clearUserProfileCache(id);
+
         return res.status(200).json({ success: true, message: "Connection request accepted successfully" })
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
@@ -281,6 +329,18 @@ export const getUserProfile = async (req, res) => {
             return res.status(400).json({ success: false, message: "Profile id is required" });
         }
 
+        const cacheKey = `profile:${profileId}`;
+        if (redisClient.isReady) {
+            try {
+                const cached = await redisClient.get(cacheKey);
+                if (cached) {
+                    return res.status(200).json(JSON.parse(cached));
+                }
+            } catch (e) {
+                console.error("Redis get error", e);
+            }
+        }
+
         const profile = await User.findById(profileId);
 
         if (!profile) {
@@ -288,7 +348,18 @@ export const getUserProfile = async (req, res) => {
         }
 
         const posts = await Post.find({ user: profileId }).populate('user')
-        return res.status(200).json({ success: true, profile, posts });
+        const responseData = { success: true, profile, posts };
+
+        if (redisClient.isReady) {
+            try {
+                // Cache profile data for 15 minutes
+                await redisClient.setEx(cacheKey, 900, JSON.stringify(responseData));
+            } catch (e) {
+                console.error("Redis set error", e);
+            }
+        }
+
+        return res.status(200).json(responseData);
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
