@@ -232,7 +232,7 @@ const ChatBox = () => {
                                                 />
                                             )}
                                             {message.text && (
-                                                <p className={`text-[14px] sm:text-[14.5px] leading-relaxed ${isSent ? 'text-white' : 'text-slate-700'}`}>
+                                                <p className={`text-[14px] sm:text-[14.5px] leading-relaxed ${isSent ? 'text-white' : 'text-slate-700 dark:text-slate-100'}`}>
                                                     {message.text}
                                                 </p>
                                             )}

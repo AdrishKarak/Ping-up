@@ -10,7 +10,7 @@ const Layout = () => {
     return user ? (
         <div className='w-full flex h-screen relative bg-gray-200 dark:bg-slate-950'>
             <Sidebar />
-            <div className='flex-1 bg-gray-200 dark:bg-slate-950 min-w-0 h-full flex flex-col pb-16 sm:pb-0'>
+            <div className='flex-1 bg-gray-200 dark:bg-slate-950 min-w-0 h-full flex flex-col pb-20 sm:pb-0 sm:ml-[270px]'>
                 <Suspense fallback={<Loading />}>
                     <Outlet />
                 </Suspense>
