@@ -2,7 +2,7 @@ import React from 'react';
 
 const Loading = () => {
     return (
-        <div className="flex items-center justify-center h-screen w-full bg-slate-100">
+        <div className="flex items-center justify-center h-screen w-full bg-slate-100 dark:bg-slate-950">
             <div className="flex flex-col items-center gap-6">
                 {/* Animated rings */}
                 <div className="relative w-20 h-20">
@@ -14,7 +14,7 @@ const Loading = () => {
 
                 {/* Animated dots */}
                 <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-medium text-slate-500 tracking-wide">Loading</span>
+                    <span className="text-sm font-medium text-slate-500 tracking-wide dark:text-slate-400">Loading</span>
                     <span className="flex gap-0.5">
                         <span className="w-1 h-1 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '0ms' }}></span>
                         <span className="w-1 h-1 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '150ms' }}></span>

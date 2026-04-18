@@ -11,7 +11,7 @@ import fs from "fs";
 //Get user data using userId
 export const getUserData = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const { userId } = await req.auth();
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
@@ -25,7 +25,7 @@ export const getUserData = async (req, res) => {
 //Update user data 
 export const updateUserData = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const { userId } = await req.auth();
         let { username, bio, location, full_name } = req.body;
         const tempUser = await User.findById(userId);
 
@@ -95,8 +95,8 @@ export const updateUserData = async (req, res) => {
             fs.unlinkSync(cover.path);
         }
 
-        await User.findByIdAndUpdate(userId, updatedData, { new: true });
-        return res.status(200).json({ success: true, message: "User Profile updated successfully" });
+        const user = await User.findByIdAndUpdate(userId, updatedData, { new: true });
+        return res.status(200).json({ success: true, message: "User Profile updated successfully", user });
 
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
@@ -106,7 +106,7 @@ export const updateUserData = async (req, res) => {
 //Find Users using username ,email , location , name
 export const discoverUsers = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const { userId } = await req.auth();
         const { input } = req.body;
 
         const allUsers = await User.find(
@@ -131,7 +131,7 @@ export const discoverUsers = async (req, res) => {
 //Follow a User
 export const followUser = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const { userId } = await req.auth();
         const { id } = req.body;
 
         const user = await User.findById(userId);
@@ -156,7 +156,7 @@ export const followUser = async (req, res) => {
 //Unfollow User
 export const unfollowUser = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const { userId } = await req.auth();
         const { id } = req.body;
 
         const user = await User.findById(userId);
@@ -177,7 +177,7 @@ export const unfollowUser = async (req, res) => {
 //Send Connection Request
 export const sendConnectionRequest = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const { userId } = await req.auth();
         const { id } = req.body;
 
         //Prevent self-connection
@@ -229,7 +229,7 @@ export const sendConnectionRequest = async (req, res) => {
 //Get USer Connections
 export const getUserConnections = async (req, res) => {
     try {
-        const { userId } = req.auth()
+        const { userId } = await req.auth()
         const user = await User.findById(userId).populate('connections followers following')
 
         const connections = user.connections
@@ -247,7 +247,7 @@ export const getUserConnections = async (req, res) => {
 //Accept Connection Request
 export const acceptConnectionRequest = async (req, res) => {
     try {
-        const { userId } = req.auth()
+        const { userId } = await req.auth()
         const { id } = req.body
 
         const connection = await Connection.findOne({ from_user_id: id, to_user_id: userId })
@@ -276,7 +276,11 @@ export const acceptConnectionRequest = async (req, res) => {
 //Get User Profile
 export const getUserProfile = async (req, res) => {
     try {
-        const { profileId } = req.body;
+        const profileId = req.body?.profileId || req.query?.profileId;
+        if (!profileId) {
+            return res.status(400).json({ success: false, message: "Profile id is required" });
+        }
+
         const profile = await User.findById(profileId);
 
         if (!profile) {

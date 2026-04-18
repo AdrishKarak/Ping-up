@@ -1,25 +1,21 @@
-import React, { useState, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import Sidebar from '../components/Sidebar';
+import Bottombar from '../components/Bottombar';
 import { Outlet } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
-import { dummyUserData } from '../assets/assets';
 import Loading from '../components/Loading';
-
+import { useSelector } from 'react-redux';
 
 const Layout = () => {
-    const user = dummyUserData;
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const user = useSelector((state) => state.user.value);
     return user ? (
-        <div className='w-full flex h-screen'>
-            <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-            <div className='flex-1 bg-gray-200 min-w-0 h-full flex flex-col'>
+        <div className='w-full flex h-screen relative bg-gray-200 dark:bg-slate-950'>
+            <Sidebar />
+            <div className='flex-1 bg-gray-200 dark:bg-slate-950 min-w-0 h-full flex flex-col pb-16 sm:pb-0'>
                 <Suspense fallback={<Loading />}>
                     <Outlet />
                 </Suspense>
             </div>
-            {
-                sidebarOpen ? <X className='absolute top-3 right-3 p-2 z-100 bg-white rounded-md shadow w-10 h-10 text-gray-600 sm:hidden' onClick={() => setSidebarOpen(false)} /> : <Menu className='absolute top-3 right-3 p-2 z-100 bg-white rounded-md shadow w-10 h-10 text-gray-600 sm:hidden' onClick={() => setSidebarOpen(true)} />
-            }
+            <Bottombar />
         </div>
     ) : (
         <Loading />
@@ -27,5 +23,3 @@ const Layout = () => {
 };
 
 export default Layout;
-
-

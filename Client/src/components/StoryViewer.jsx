@@ -18,6 +18,7 @@ const StoryViewer = ({ stories, currentIndex, setViewStory }) => {
     const progressRef = useRef(0);
 
     const currentStory = stories[activeIndex];
+    const currentMediaUrl = currentStory?.media_urls?.[0] || currentStory?.media_url;
     const hasPrev = activeIndex > 0;
     const hasNext = activeIndex < stories.length - 1;
 
@@ -182,7 +183,7 @@ const StoryViewer = ({ stories, currentIndex, setViewStory }) => {
             case "image":
                 return (
                     <img
-                        src={currentStory.media_url}
+                        src={currentMediaUrl}
                         alt="story"
                         className="w-full h-full object-cover"
                         draggable={false}
@@ -196,7 +197,7 @@ const StoryViewer = ({ stories, currentIndex, setViewStory }) => {
                         autoPlay
                         playsInline
                         muted={isMuted}
-                        src={currentStory.media_url}
+                        src={currentMediaUrl}
                         className="w-full h-full object-cover"
                     />
                 );

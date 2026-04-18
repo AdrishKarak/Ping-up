@@ -1,24 +1,29 @@
 import { useRef, useState } from "react";
-import { dummyUserData } from "../assets/assets";
 import { Camera, MapPin, User, AtSign, FileText, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { updateUser } from "../features/user/userSlice";
+import { useAuth } from "@clerk/react";
 
 const ProfileModal = ({ setShowEditProfile }) => {
-    const user = dummyUserData;
+    const dispatch = useDispatch();
+    const { getToken } = useAuth()
+    const user = useSelector((state) => state.user.value);
     const fileInputRef = useRef(null);
     const coverInputRef = useRef(null);
 
     const [editForm, setEditForm] = useState({
-        full_name: user.full_name,
-        username: user.username,
-        bio: user.bio,
-        location: user.location,
+        full_name: user?.full_name || "",
+        username: user?.username || "",
+        bio: user?.bio || "",
+        location: user?.location || "",
         profile_picture: null,
         cover_photo: null,
     });
 
     const [previewUrl, setPreviewUrl] = useState(null);
     const [coverPreviewUrl, setCoverPreviewUrl] = useState(null);
+    const [saving, setSaving] = useState(false);
 
     const handleChange = (e) => {
         setEditForm({ ...editForm, [e.target.name]: e.target.value });
@@ -42,13 +47,27 @@ const ProfileModal = ({ setShowEditProfile }) => {
 
     const handleSaveProfile = async (e) => {
         e.preventDefault();
-        // Simulate a tiny delay for realism before toast
         const loadingToast = toast.loading("Updating profile...");
+        setSaving(true);
 
-        setTimeout(() => {
+        try {
+            const token = await getToken();
+            const userData = new FormData();
+            const { full_name, username, bio, location, profile_picture, cover_photo } = editForm;
+            userData.append("full_name", full_name);
+            userData.append("username", username);
+            userData.append("bio", bio);
+            userData.append("location", location);
+            profile_picture && userData.append("profile", profile_picture);
+            cover_photo && userData.append("cover", cover_photo);
+            await dispatch(updateUser({ userData, token })).unwrap();
             toast.success("Profile updated successfully!", { id: loadingToast });
             setShowEditProfile(false);
-        }, 800);
+        } catch (error) {
+            toast.error(error || "Failed to update profile", { id: loadingToast });
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -57,7 +76,7 @@ const ProfileModal = ({ setShowEditProfile }) => {
             onClick={() => setShowEditProfile(false)}
         >
             <div
-                className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden animate-modal-in"
+                className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden animate-modal-in dark:bg-slate-900"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* ── Header Cover Photo ── */}
@@ -119,7 +138,7 @@ const ProfileModal = ({ setShowEditProfile }) => {
                 {/* ── Avatar Picker ── */}
                 <div className="flex justify-center -mt-10 relative z-10">
                     <div className="relative group">
-                        <div className="w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-100">
+                        <div className="w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-100 dark:border-slate-900 dark:bg-slate-800">
                             <img
                                 src={previewUrl || user.profile_picture}
                                 alt={user.full_name}
@@ -135,7 +154,7 @@ const ProfileModal = ({ setShowEditProfile }) => {
                             <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-md" />
                         </button>
                         {/* Green dot badge */}
-                        <div className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-purple-500 border-2 border-white flex items-center justify-center">
+                        <div className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-purple-500 border-2 border-white flex items-center justify-center dark:border-slate-900">
                             <Camera className="w-2.5 h-2.5 text-white" />
                         </div>
                         <input
@@ -163,7 +182,7 @@ const ProfileModal = ({ setShowEditProfile }) => {
                             value={editForm.full_name}
                             onChange={handleChange}
                             placeholder="Your full name"
-                            className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-300 transition-all"
+                            className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-300 transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500 focus:dark:border-purple-500 dark:focus:ring-purple-500/50"
                         />
                     </div>
 
@@ -182,7 +201,7 @@ const ProfileModal = ({ setShowEditProfile }) => {
                                 value={editForm.username}
                                 onChange={handleChange}
                                 placeholder="username"
-                                className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-300 transition-all"
+                                className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-300 transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500 focus:dark:border-purple-500 dark:focus:ring-purple-500/50"
                             />
                         </div>
                     </div>
@@ -200,7 +219,7 @@ const ProfileModal = ({ setShowEditProfile }) => {
                             onChange={handleChange}
                             placeholder="Tell others about yourself..."
                             rows={3}
-                            className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-300 transition-all resize-none"
+                            className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-300 transition-all resize-none dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500 focus:dark:border-purple-500 dark:focus:ring-purple-500/50"
                         />
                         <p className="text-[11px] text-gray-400 text-right">{editForm.bio.length}/160</p>
                     </div>
@@ -218,7 +237,7 @@ const ProfileModal = ({ setShowEditProfile }) => {
                             value={editForm.location}
                             onChange={handleChange}
                             placeholder="City, Country"
-                            className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-300 transition-all"
+                            className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-300 transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500 focus:dark:border-purple-500 dark:focus:ring-purple-500/50"
                         />
                     </div>
 
@@ -227,15 +246,16 @@ const ProfileModal = ({ setShowEditProfile }) => {
                         <button
                             type="button"
                             onClick={() => setShowEditProfile(false)}
-                            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer"
+                            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:border-slate-600"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
+                            disabled={saving}
                             className="flex-1 py-2.5 rounded-xl bg-linear-to-r from-purple-500 to-purple-600 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(147,51,234,0.3)] hover:shadow-[0_4px_16px_rgba(147,51,234,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                         >
-                            Save Changes
+                            {saving ? "Saving..." : "Save Changes"}
                         </button>
                     </div>
                 </form>

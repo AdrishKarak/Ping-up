@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { dummyUserData, dummyPostsData } from '../assets/assets';
+import api from '../api/axios';
 import Loading from '../components/Loading';
 import UserProfileinfo from '../components/UserProfileinfo';
 import PostCard from '../components/PostCard';
 import { Heart, ImageIcon, MessageSquareText } from 'lucide-react';
 import ProfileModal from '../components/ProfileModal';
+import { useAuth } from '@clerk/react';
+import { useSelector } from 'react-redux';
 
 const TABS = [
     { key: "posts", label: "Posts" },
@@ -14,20 +16,41 @@ const TABS = [
 ];
 
 const Profile = () => {
+    const currentUser = useSelector((state) => state.user.value);
+    const { getToken } = useAuth();
     const { profileId } = useParams();
     const [user, setUser] = useState(null);
     const [posts, setPosts] = useState([]);
     const [showEditProfile, setShowEditProfile] = useState(false);
     const [activeTab, setActiveTab] = useState("posts");
 
-    const fetchUser = async () => {
-        setUser(dummyUserData);
-        setPosts(dummyPostsData);
-    }
+    const fetchUser = useCallback(async (id) => {
+        try {
+            const token = await getToken();
+            const { data } = await api.post('/api/user/profiles', { profileId: id }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            setUser(data.profile);
+            setPosts(data.posts || []);
+        } catch (error) {
+            console.log(error);
+        }
+    }, [getToken]);
 
     useEffect(() => {
-        fetchUser();
-    }, []);
+        const id = profileId || currentUser?._id;
+        if (id) {
+            fetchUser(id);
+        }
+    }, [profileId, currentUser?._id, fetchUser]);
+
+    useEffect(() => {
+        if (!profileId && currentUser) {
+            setUser(currentUser);
+        }
+    }, [profileId, currentUser]);
 
     // --- Tab content helpers ---
     const userPosts = posts;
@@ -42,7 +65,7 @@ const Profile = () => {
     );
 
     const likedPosts = posts.filter(
-        (p) => p.likes_count && p.likes_count.includes(dummyUserData._id)
+        (p) => p.likes_count && p.likes_count.includes(currentUser?._id)
     );
 
     const renderTabContent = () => {
@@ -68,7 +91,7 @@ const Profile = () => {
                         {allImages.map((img, idx) => (
                             <div
                                 key={`${img.postId}-${img.index}`}
-                                className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 cursor-pointer border border-gray-100"
+                                className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 cursor-pointer border border-gray-100 dark:bg-slate-800 dark:border-slate-700"
                             >
                                 <img
                                     src={img.url}
@@ -112,10 +135,10 @@ const Profile = () => {
     };
 
     return user ? (
-        <div className="relative h-full overflow-y-auto no-scrollbar bg-gray-50/80 py-4 sm:py-6 md:py-8 px-3 sm:px-6">
+        <div className="relative h-full overflow-y-auto no-scrollbar bg-gray-50/80 py-4 sm:py-6 md:py-8 px-3 sm:px-6 dark:bg-slate-950">
             <div className="max-w-2xl mx-auto">
                 {/* Profile Card */}
-                <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden border border-gray-100/60">
+                <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden border border-gray-100/60 dark:bg-slate-900 dark:border-slate-800 dark:shadow-none">
                     {/* Cover photo */}
                     <div className="h-36 sm:h-44 md:h-56 bg-linear-to-br from-purple-300 via-pink-200 to-indigo-200 relative overflow-hidden">
                         {user.cover_photo && (
@@ -139,7 +162,7 @@ const Profile = () => {
 
                     {/* Tabs */}
                     <div className="px-5 md:px-8 pb-1">
-                        <div className="flex items-center border-t border-gray-100">
+                        <div className="flex items-center border-t border-gray-100 dark:border-slate-800">
                             {TABS.map((tab) => (
                                 <button
                                     key={tab.key}
@@ -147,8 +170,8 @@ const Profile = () => {
                                     className={`
                                         relative flex-1 py-3 text-sm font-semibold tracking-wide transition-all duration-200 cursor-pointer
                                         ${activeTab === tab.key
-                                            ? "text-purple-600"
-                                            : "text-gray-400 hover:text-gray-600"
+                                            ? "text-purple-600 dark:text-purple-400"
+                                            : "text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300"
                                         }
                                     `}
                                 >
@@ -181,12 +204,12 @@ const Profile = () => {
 
 // Reusable empty state for tabs with no content
 const EmptyState = ({ icon, title, description }) => (
-    <div className="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-2xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
-        <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
+    <div className="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-2xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.03)] dark:bg-slate-900 dark:border-slate-800 dark:shadow-none">
+        <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4 dark:bg-slate-800">
             {icon}
         </div>
-        <p className="text-gray-800 font-semibold text-base">{title}</p>
-        <p className="text-gray-400 text-sm mt-1">{description}</p>
+        <p className="text-gray-800 font-semibold text-base dark:text-slate-100">{title}</p>
+        <p className="text-gray-400 text-sm mt-1 dark:text-slate-500">{description}</p>
     </div>
 );
 

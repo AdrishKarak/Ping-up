@@ -1,5 +1,5 @@
-
-import { BadgeCheck, Calendar, MapPin, SquarePen } from 'lucide-react';
+import { BadgeCheck, Calendar, MapPin, SquarePen, Moon, Sun } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const getRelativeTime = (dateString) => {
     const createdAt = new Date(dateString);
@@ -15,6 +15,24 @@ const getRelativeTime = (dateString) => {
 };
 
 const UserProfileinfo = ({ user, profileId, posts, setShowEditProfile }) => {
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    useEffect(() => {
+        setIsDarkMode(document.documentElement.classList.contains('dark'));
+    }, []);
+
+    const toggleTheme = () => {
+        if (isDarkMode) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            setIsDarkMode(false);
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            setIsDarkMode(true);
+        }
+    };
+
     return (
         <div className="relative px-5 pb-5 md:px-8 md:pb-6">
             <div className="flex flex-col gap-4 md:gap-5">
@@ -32,7 +50,7 @@ const UserProfileinfo = ({ user, profileId, posts, setShowEditProfile }) => {
                         {/* Name & username */}
                         <div className="mt-3 md:ml-5 md:mt-0">
                             <div className="flex items-center justify-center gap-1.5 md:justify-start">
-                                <h1 className="text-xl mt-4 font-bold tracking-tight text-gray-900 sm:text-2xl">
+                                <h1 className="text-xl mt-4 font-bold tracking-tight text-gray-900 sm:text-2xl dark:text-gray-100">
                                     {user.full_name}
                                 </h1>
                                 {user.is_verified && (
@@ -44,7 +62,7 @@ const UserProfileinfo = ({ user, profileId, posts, setShowEditProfile }) => {
                                     />
                                 )}
                             </div>
-                            <p className="mt-0.5 text-sm font-medium text-gray-400">
+                            <p className="mt-0.5 text-sm font-medium text-gray-400 dark:text-gray-500">
                                 {user.username ? `@${user.username}` : "Add username"}
                             </p>
                         </div>
@@ -52,10 +70,17 @@ const UserProfileinfo = ({ user, profileId, posts, setShowEditProfile }) => {
 
                     {/* Edit button — only on own profile */}
                     {!profileId && (
-                        <div className="flex justify-center md:justify-end">
+                        <div className="flex justify-center md:justify-end gap-3">
+                            <button
+                                onClick={toggleTheme}
+                                className="inline-flex items-center justify-center rounded-xl md:rounded-full border border-gray-200 bg-white p-2.5 text-gray-700 shadow-sm transition-all duration-200 hover:border-purple-300 hover:text-purple-600 hover:shadow cursor-pointer dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:text-purple-400"
+                                aria-label="Toggle dark mode"
+                            >
+                                {isDarkMode ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+                            </button>
                             <button
                                 onClick={() => setShowEditProfile(true)}
-                                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:border-purple-300 hover:text-purple-600 hover:shadow cursor-pointer"
+                                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:border-purple-300 hover:text-purple-600 hover:shadow cursor-pointer dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
                             >
                                 <SquarePen className="h-4 w-4" />
                                 Edit
@@ -66,13 +91,13 @@ const UserProfileinfo = ({ user, profileId, posts, setShowEditProfile }) => {
 
                 {/* Bio */}
                 {user.bio && (
-                    <p className="text-[14px] sm:text-[15px] leading-relaxed text-gray-700 whitespace-pre-line max-w-xl mt-1">
+                    <p className="text-[14px] sm:text-[15px] leading-relaxed text-gray-700 whitespace-pre-line max-w-xl mt-1 dark:text-gray-300">
                         {user.bio}
                     </p>
                 )}
 
                 {/* Location & Joined */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-gray-400">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-gray-400 dark:text-gray-500">
                     {user.location && (
                         <span className="inline-flex items-center gap-1.5">
                             <MapPin className="h-3.5 w-3.5" />
@@ -82,7 +107,7 @@ const UserProfileinfo = ({ user, profileId, posts, setShowEditProfile }) => {
                     <span className="inline-flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5" />
                         Joined{' '}
-                        <span className="font-medium text-gray-500">
+                        <span className="font-medium text-gray-500 dark:text-gray-400">
                             {getRelativeTime(user.createdAt)}
                         </span>
                     </span>
@@ -101,8 +126,8 @@ const UserProfileinfo = ({ user, profileId, posts, setShowEditProfile }) => {
 
 const StatItem = ({ value, label }) => (
     <div className="flex items-baseline gap-1.5">
-        <span className="text-base font-bold text-gray-900">{value}</span>
-        <span className="text-[13px] text-gray-400 font-medium">{label}</span>
+        <span className="text-base font-bold text-gray-900 dark:text-gray-100">{value}</span>
+        <span className="text-[13px] text-gray-400 font-medium dark:text-gray-500">{label}</span>
     </div>
 );
 

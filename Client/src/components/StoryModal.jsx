@@ -1,16 +1,19 @@
 import { ArrowLeft, Type, Image as ImageIcon, Send, Loader2 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useAuth } from "@clerk/react";
+import api from "../api/axios";
 
-const StoryModal = ({ setShowStoryModal }) => {
+const StoryModal = ({ setShowStoryModal, fetchStories }) => {
     const bgcolors = ["#4f46e5", "#7c3aed", "#db2777", "#e11d48", "#ca8a04", "#0d9488", "#222222"]
 
     const [mode, setMode] = useState("text");
     const [background, setBackground] = useState(bgcolors[0]);
     const [text, setText] = useState("");
     const [media, setMedia] = useState(null);
-    const [previwUrl, setPreviewUrl] = useState(null);
-    const [isCreating] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [isCreating, setIsCreating] = useState(false);
+    const { getToken } = useAuth();
 
     const handleMediaChange = (e) => {
         const file = e.target.files?.[0];
@@ -21,6 +24,42 @@ const StoryModal = ({ setShowStoryModal }) => {
     }
 
     const handleCreateStory = async () => {
+        if (mode === "text" && !text.trim()) {
+            throw new Error("Write something for your story");
+        }
+
+        if (mode === "media" && !media) {
+            throw new Error("Select an image or video");
+        }
+
+        setIsCreating(true);
+
+        try {
+            const token = await getToken();
+            const formData = new FormData();
+            const mediaType = mode === "text" ? "text" : media.type.startsWith("video/") ? "video" : "image";
+
+            formData.append("content", text.trim());
+            formData.append("media_type", mediaType);
+            formData.append("background_color", background);
+
+            if (media) {
+                formData.append("media", media);
+            }
+
+            const { data } = await api.post('/api/story/create', formData, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (!data.success) {
+                throw new Error(data.message);
+            }
+
+            await fetchStories?.();
+            setShowStoryModal(false);
+        } finally {
+            setIsCreating(false);
+        }
     }
 
     return (
@@ -55,11 +94,11 @@ const StoryModal = ({ setShowStoryModal }) => {
                                     maxLength={150}
                                     autoFocus
                                 />
-                            ) : previwUrl ? (
+                            ) : previewUrl ? (
                                 media?.type?.includes("video") ? (
-                                    <video src={previwUrl} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+                                    <video src={previewUrl} className="w-full h-full object-cover" autoPlay loop muted playsInline />
                                 ) : (
-                                    <img src={previwUrl} className="w-full h-full object-cover" alt="preview" />
+                                    <img src={previewUrl} className="w-full h-full object-cover" alt="preview" />
                                 )
                             ) : (
                                 <div className="text-white/50 flex flex-col items-center">
@@ -109,7 +148,7 @@ const StoryModal = ({ setShowStoryModal }) => {
                         )}
 
                         {/* Change Media Option (Only for Media Mode with URL) */}
-                        {mode === "media" && previwUrl && (
+                        {mode === "media" && previewUrl && (
                             <div className="flex justify-center animate-in fade-in duration-300">
                                 <label className="cursor-pointer bg-white/10 hover:bg-white/20 transition-all px-5 py-2.5 rounded-full flex items-center gap-2 text-sm font-medium shadow-sm">
                                     <ImageIcon size={18} /> Change Media

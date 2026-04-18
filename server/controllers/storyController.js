@@ -3,21 +3,43 @@ import Story from '../models/Story.js';
 import User from '../models/User.js';
 import { inngest } from '../inngest/index.js';
 import imagekit from '../configs/imagekit.js';
+import { toFile } from '@imagekit/nodejs';
 
 
 //Add User Story
 export const addStory = async (req, res) => {
+    const media = req.file;
+
     try {
         const { userId } = await req.auth();
         const { content, media_type, background_color } = req.body;
-        const media = req.file;
         let media_url = ''
+
+        if (!['text', 'image', 'video'].includes(media_type)) {
+            return res.status(400).json({ success: false, message: "Invalid story type" });
+        }
+
+        if (media_type === 'text' && !content?.trim()) {
+            return res.status(400).json({ success: false, message: "Story content is required" });
+        }
+
+        if ((media_type === 'image' || media_type === 'video') && !media) {
+            return res.status(400).json({ success: false, message: "Story media is required" });
+        }
+
+        if (media_type === 'image' && !media.mimetype?.startsWith('image/')) {
+            return res.status(400).json({ success: false, message: "Please upload an image file" });
+        }
+
+        if (media_type === 'video' && !media.mimetype?.startsWith('video/')) {
+            return res.status(400).json({ success: false, message: "Please upload a video file" });
+        }
 
         //Upload media to cloud
         if (media_type === 'image' || media_type === 'video') {
             const buffer = fs.readFileSync(media.path);
             const response = await imagekit.files.upload({
-                file: buffer,
+                file: await toFile(buffer, media.originalname),
                 fileName: media.originalname,
                 folder: "stories" // Use separate folder for stories
             })
@@ -54,14 +76,22 @@ export const addStory = async (req, res) => {
         });
 
         //Schedule story deletion after 24 hours
-        await inngest.send({
-            name: 'app/story.delete',
-            data: { storyId: story._id.toString() }
-        })
+        try {
+            await inngest.send({
+                name: 'app/story.delete',
+                data: { storyId: story._id.toString() }
+            })
+        } catch (error) {
+            console.warn('Failed to schedule story deletion', error.message);
+        }
 
         return res.status(201).json({ success: true, message: "Story added successfully", story });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
+    } finally {
+        if (media && media.path && fs.existsSync(media.path)) {
+            fs.unlinkSync(media.path);
+        }
     }
 }
 

@@ -92,10 +92,14 @@ export const sendMessage = async (req, res) => {
             connectedClients[to_user_id].write(`data: ${JSON.stringify(messageWithUserData)}\n\n`);
         }
 
-        await inngest.send({
-            name: "app/message.sent",
-            data: { messageId: message._id }
-        });
+        try {
+            await inngest.send({
+                name: "app/message.sent",
+                data: { messageId: message._id }
+            });
+        } catch (error) {
+            console.warn('Failed to schedule message email', error.message);
+        }
 
         return res.status(201).json({ success: true, message });
     } catch (error) {
@@ -133,8 +137,30 @@ export const getMessages = async (req, res) => {
 export const getUserRecentMessages = async (req, res) => {
     try {
         const { userId } = await req.auth();
-        const messages = await Message.find({ to_user_id: userId }).populate('from_user_id to_user_id').sort({ createdAt: -1 });
-        return res.status(200).json({ success: true, messages });
+        const messages = await Message.find({
+            $or: [
+                { from_user_id: userId },
+                { to_user_id: userId }
+            ]
+        }).populate('from_user_id to_user_id').sort({ createdAt: -1 });
+
+        const conversations = [];
+        const seenUsers = new Set();
+
+        messages.forEach((message) => {
+            const fromUserId = message.from_user_id?._id?.toString?.() || message.from_user_id;
+            const toUserId = message.to_user_id?._id?.toString?.() || message.to_user_id;
+            const otherUserId = fromUserId === userId ? toUserId : fromUserId;
+
+            if (!otherUserId || seenUsers.has(otherUserId)) {
+                return;
+            }
+
+            seenUsers.add(otherUserId);
+            conversations.push(message);
+        });
+
+        return res.status(200).json({ success: true, messages: conversations });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
