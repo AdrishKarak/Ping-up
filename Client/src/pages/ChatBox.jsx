@@ -61,19 +61,18 @@ const ChatBox = () => {
     useEffect(() => {
         if (!currentUser?._id) return;
 
-        const eventSource = new EventSource(`${api.defaults.baseURL}/api/message/sse/${currentUser._id}`);
-
-        eventSource.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type === "connected") return;
-
+        const handleNewMessage = (event) => {
+            const data = event.detail;
             const fromUserId = typeof data.from_user_id === "object" ? data.from_user_id._id : data.from_user_id;
+            
             if (fromUserId === userid) {
                 setMessages((prev) => [...prev, data]);
             }
         };
 
-        return () => eventSource.close();
+        window.addEventListener('new-message', handleNewMessage);
+
+        return () => window.removeEventListener('new-message', handleNewMessage);
     }, [currentUser?._id, userid]);
 
     const sendMessage = async () => {

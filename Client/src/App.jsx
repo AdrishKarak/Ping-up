@@ -15,6 +15,9 @@ import { Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { fetchUser } from './features/user/userSlice.js';
+import Notification from './components/Notification.jsx';
+import api from './api/axios.js';
+import { setLatestMessage } from './features/messages/messagesSlice.js';
 
 const App = () => {
     const { user, isLoaded } = useUser();
@@ -37,10 +40,36 @@ const App = () => {
         fetchData()
     }, [user, getToken, dispatch]);
 
+    useEffect(() => {
+        if (!user?._id) return;
+
+        const baseURL = api.defaults.baseURL || import.meta.env.VITE_BASEURL;
+        const eventSource = new EventSource(`${baseURL}/api/message/sse/${user._id}`);
+
+        eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === "connected") return;
+
+            // Handle incoming message globally
+            dispatch(setLatestMessage(data));
+            
+            // Dispatch a custom event for ChatBox to pick up if it's open
+            window.dispatchEvent(new CustomEvent('new-message', { detail: data }));
+        };
+
+        eventSource.onerror = (error) => {
+            console.error("SSE Error:", error);
+            eventSource.close();
+        };
+
+        return () => eventSource.close();
+    }, [user?._id, dispatch]);
+
     if (!isLoaded) return <Loading />;
     return (
         <div>
             <Toaster />
+            <Notification />
             <Routes>
                 <Route path="/" element={!user ? <Login /> : <Layout />}>
                     < Route index element={<Feed />} />
