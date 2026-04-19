@@ -526,7 +526,7 @@ const ConvoCard = ({ user, index, currentUser, isUnread, getPreview, formatTime,
                 </div>
             </div>
 
-            <div className="msg-actions">
+            <div className="msg-actions ml-7">
                 <button
                     className="action-btn primary"
                     title="Open chat"
