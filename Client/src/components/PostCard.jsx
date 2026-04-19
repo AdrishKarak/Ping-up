@@ -5,14 +5,15 @@ import { useSelector } from "react-redux";
 import { useAuth } from "@clerk/react";
 import toast from "react-hot-toast";
 import api from "../api/axios";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import CommentModal from "./CommentModal";
+import ImageModal from "./ImageModal";
 import { useQueryClient } from "@tanstack/react-query";
 
 // Custom confirmation modal — replaces window.confirm()
 const DeleteModal = ({ onConfirm, onCancel, isDeleting }) => (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-        <motion.div 
+        <Motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 w-full max-w-sm dark:bg-slate-900 dark:border-slate-800 dark:shadow-none"
@@ -42,7 +43,7 @@ const DeleteModal = ({ onConfirm, onCancel, isDeleting }) => (
                     {isDeleting ? "Deleting..." : "Delete"}
                 </button>
             </div>
-        </motion.div>
+        </Motion.div>
     </div>
 );
 
@@ -55,6 +56,8 @@ const PostCard = ({ post, onDelete, onLikeToggle }) => {
     const [isLiked, setIsLiked] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showCommentModal, setShowCommentModal] = useState(false);
+    const [showImageModal, setShowImageModal] = useState(false);
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const currentUser = useSelector((state) => state.user.value);
@@ -143,7 +146,7 @@ const PostCard = ({ post, onDelete, onLikeToggle }) => {
     };
 
     return (
-        <motion.div
+        <Motion.div
             layout
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -167,6 +170,14 @@ const PostCard = ({ post, onDelete, onLikeToggle }) => {
                             setCommentCount(prev => prev + 1);
                             queryClient.invalidateQueries({ queryKey: ['feed'] });
                         }}
+                    />
+                )}
+                {showImageModal && (
+                    <ImageModal 
+                        images={post.image_urls} 
+                        currentIndex={selectedImageIndex} 
+                        onClose={() => setShowImageModal(false)}
+                        onNavigate={(index) => setSelectedImageIndex(index)}
                     />
                 )}
             </AnimatePresence>
@@ -213,10 +224,35 @@ const PostCard = ({ post, onDelete, onLikeToggle }) => {
                     />
                 )}
 
-                {/* Media */}
+                {/* Media Grid */}
                 {post.image_urls && post.image_urls.length > 0 && (
-                    <div className="mt-4 rounded-xl overflow-hidden border border-gray-100 bg-gray-50 cursor-pointer dark:border-slate-800 dark:bg-slate-950">
-                        <img src={post.image_urls[0]} alt="Post media" loading="lazy" className="w-full max-h-[500px] object-cover hover:opacity-95 transition-opacity" />
+                    <div className={`mt-4 rounded-2xl overflow-hidden border border-gray-100/50 bg-gray-50/50 dark:border-slate-800/50 dark:bg-slate-950/50 grid gap-1.5 ${post.image_urls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                        {post.image_urls.map((url, index) => (
+                            <div 
+                                key={index} 
+                                onClick={() => {
+                                    setSelectedImageIndex(index);
+                                    setShowImageModal(true);
+                                }}
+                                className={`
+                                    relative group cursor-zoom-in overflow-hidden
+                                    ${post.image_urls.length === 3 && index === 0 ? 'col-span-2' : 'col-span-1'}
+                                `}
+                            >
+                                <img 
+                                    src={url} 
+                                    alt={`Post media ${index + 1}`} 
+                                    loading="lazy" 
+                                    className={`
+                                        w-full object-cover transition-transform duration-500 group-hover:scale-105
+                                        ${post.image_urls.length === 1 ? 'max-h-[500px]' : 
+                                          post.image_urls.length === 2 ? 'aspect-square' :
+                                          post.image_urls.length === 3 && index === 0 ? 'aspect-video' : 'aspect-square'}
+                                    `} 
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                            </div>
+                        ))}
                     </div>
                 )}
 
@@ -243,7 +279,7 @@ const PostCard = ({ post, onDelete, onLikeToggle }) => {
                     </button>
                 </div>
             </div>
-        </motion.div>
+        </Motion.div>
     );
 };
 

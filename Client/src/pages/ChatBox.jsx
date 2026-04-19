@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ArrowLeft, ImagePlus, Send, X } from 'lucide-react';
+import { ArrowLeft, ImagePlus, Send, X, MoreVertical, Search, Phone, Video } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@clerk/react';
 import { useSelector } from 'react-redux';
@@ -7,6 +7,7 @@ import api from '../api/axios';
 import Loading from '../components/Loading';
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 
 const ChatBox = () => {
     const { userid } = useParams();
@@ -69,7 +70,7 @@ const ChatBox = () => {
         const handleNewMessage = (event) => {
             const data = event.detail;
             const fromUserId = typeof data.from_user_id === "object" ? data.from_user_id._id : data.from_user_id;
-            
+
             if (fromUserId === userid) {
                 setMessages((prev) => [...prev, data]);
             }
@@ -165,161 +166,223 @@ const ChatBox = () => {
     if (loading || !user) return <Loading />;
 
     return (
-        <div className="flex-1 min-h-0 w-full flex flex-col bg-linear-to-b from-purple-50/60 via-white to-white dark:from-slate-950 dark:via-slate-950 dark:to-slate-950">
+        <div className="flex-1 min-h-0 h-full w-full flex flex-col relative overflow-hidden bg-slate-50/50 dark:bg-[#020617]">
+            {/* ── Decorative Background ── */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/10 blur-[120px] dark:bg-purple-500/5" />
+                <div className="absolute bottom-[-10%] left-[-10%] w-[35%] h-[35%] rounded-full bg-indigo-500/10 blur-[100px] dark:bg-indigo-500/5" />
+                <div className="absolute top-[20%] left-[10%] w-[20%] h-[20%] rounded-full bg-blue-500/5 blur-[80px]" />
+            </div>
+
             {/* ── Header ── */}
-            <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-purple-100/60 px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-4 dark:bg-slate-950/80 dark:border-slate-800/80">
+            <div className="sticky top-0 z-20 bg-white/70 backdrop-blur-2xl border-b border-slate-200/50 px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-4 dark:bg-slate-950/70 dark:border-slate-800/50">
                 <button
                     onClick={() => navigate('/messages')}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors shrink-0 dark:bg-purple-500/20 dark:hover:bg-purple-500/30 dark:text-purple-400"
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white text-slate-600 hover:text-purple-600 hover:shadow-md transition-all active:scale-95 shrink-0 border border-slate-100 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:text-purple-400"
                 >
                     <ArrowLeft className="w-[18px] h-[18px]" />
                 </button>
 
-                <img
-                    src={user.profile_picture}
-                    alt={user.full_name}
-                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover ring-2 ring-purple-200/60 shadow-sm shrink-0"
-                />
+                <div className="relative shrink-0">
+                    <img
+                        src={user.profile_picture}
+                        alt={user.full_name}
+                        className="w-11 h-11 rounded-2xl object-cover ring-2 ring-white shadow-sm dark:ring-slate-900"
+                    />
+                    {user.isOnline && (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full dark:border-slate-950">
+                            <div className="w-full h-full rounded-full bg-emerald-500 animate-ping opacity-75" />
+                        </div>
+                    )}
+                </div>
 
-                <div className="min-w-0 flex-1">
-                    <h2 className="font-bold text-slate-800 text-[15px] sm:text-base leading-tight truncate dark:text-slate-100">
+                <div className="min-w-0 flex-1 ml-0.5">
+                    <h2 className="font-bold text-slate-900 text-base leading-tight truncate dark:text-slate-100">
                         {user.full_name}
                     </h2>
-                    <div className="flex items-center gap-1.5">
-                        {user.isOnline ? (
-                            <>
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Online</span>
-                            </>
-                        ) : (
-                            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">Offline</span>
-                        )}
-                    </div>
+                    <p className="text-[11px] font-medium text-slate-500 dark:text-slate-500 mt-0.5">
+                        {user.isOnline ? 'Active now' : 'Currently offline'}
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-1 sm:gap-2">
+                    <button className="w-9 h-9 hidden sm:flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-800 dark:hover:text-slate-200">
+                        <Phone className="w-[18px] h-[18px]" />
+                    </button>
+                    <button className="w-9 h-9 hidden sm:flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-800 dark:hover:text-slate-200">
+                        <Video className="w-[18px] h-[18px]" />
+                    </button>
+                    <button className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-800 dark:hover:text-slate-200">
+                        <MoreVertical className="w-[18px] h-[18px]" />
+                    </button>
                 </div>
             </div>
 
             {/* ── Messages Area ── */}
-            <div className="flex-1 overflow-y-auto no-scrollbar px-4 sm:px-6 py-4 sm:py-6 space-y-1">
-                {Object.entries(groupedMessages).map(([dateKey, msgs]) => (
-                    <div key={dateKey}>
-                        {/* Date separator */}
-                        <div className="flex items-center justify-center my-5">
-                            <div className="px-3.5 py-1 rounded-full bg-purple-100/70 text-[11px] font-semibold text-purple-500 tracking-wide uppercase shadow-sm dark:bg-purple-900/40 dark:text-purple-400 dark:shadow-none">
-                                {formatDate(msgs[0].createdAt)}
-                            </div>
-                        </div>
-
-                        {/* Messages for this date */}
-                        {msgs.map((message, index) => {
-                            const fromUserId = typeof message.from_user_id === "object" ? message.from_user_id._id : message.from_user_id;
-                            const isSent = fromUserId === currentUser?._id;
-                            const isImage = message.message_type === 'image';
-
-                            return (
-                                <div
-                                    key={message._id || index}
-                                    className={`flex mb-2.5 ${isSent ? 'justify-end' : 'justify-start'}`}
-                                >
-                                    <div className={`max-w-[75%] sm:max-w-[65%] group`}>
-                                        {/* Bubble */}
-                                        <div
-                                            className={`
-                                                relative rounded-2xl px-4 py-2.5 shadow-sm transition-shadow
-                                                ${isSent
-                                                    ? 'bg-linear-to-br from-purple-500 to-purple-600 text-white rounded-br-md dark:from-purple-600 dark:to-purple-700'
-                                                    : 'bg-white text-slate-700 border border-purple-100/50 rounded-bl-md shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:shadow-none'
-                                                }
-                                            `}
-                                        >
-                                            {isImage && message.media_url && (
-                                                <img
-                                                    src={message.media_url}
-                                                    alt="shared"
-                                                    className="rounded-xl mb-2 max-h-60 w-full object-cover"
-                                                />
-                                            )}
-                                            {message.text && (
-                                                <p className={`text-[14px] sm:text-[14.5px] leading-relaxed ${isSent ? 'text-white' : 'text-slate-700 dark:text-slate-100'}`}>
-                                                    {message.text}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* Timestamp */}
-                                        <p className={`text-[10px] mt-1 px-1 text-slate-400 ${isSent ? 'text-right' : 'text-left'} dark:text-slate-500`}>
-                                            {formatTime(message.createdAt)}
-                                            {isSent && message.seen && (
-                                                <span className="ml-1.5 text-purple-400">✓✓</span>
-                                            )}
-                                        </p>
+            <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth px-4 sm:px-6 py-6 space-y-8 relative z-10">
+                <AnimatePresence mode="popLayout" initial={false}>
+                    {Object.entries(groupedMessages).map(([dateKey, msgs]) => (
+                        <Motion.div
+                            layout
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            key={dateKey}
+                            className="space-y-6"
+                        >
+                            {/* Date separator */}
+                            <div className="flex items-center justify-center">
+                                <div className="relative flex items-center w-full max-w-sm justify-center">
+                                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                        <div className="w-full border-t border-slate-200 dark:border-slate-800/60 transition-colors"></div>
+                                    </div>
+                                    <div className="relative px-4 py-1 rounded-full bg-white text-[10px] sm:text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border border-slate-100 dark:bg-slate-950 dark:border-slate-800/80 shadow-xs pointer-events-none transition-all">
+                                        {formatDate(msgs[0].createdAt)}
                                     </div>
                                 </div>
-                            );
-                        })}
-                    </div>
-                ))}
-                <div ref={messagesEndRef} />
+                            </div>
+
+                            {/* Messages for this date */}
+                            <div className="space-y-4">
+                                {msgs.map((message, index) => {
+                                    const fromUserId = typeof message.from_user_id === "object" ? message.from_user_id._id : message.from_user_id;
+                                    const isSent = fromUserId === currentUser?._id;
+                                    const isImage = message.message_type === 'image';
+
+                                    return (
+                                        <Motion.div
+                                            key={message._id || index}
+                                            initial={{ opacity: 0, x: isSent ? 20 : -20, scale: 0.9 }}
+                                            animate={{ opacity: 1, x: 0, scale: 1 }}
+                                            transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+                                            className={`flex group ${isSent ? 'justify-end' : 'justify-start'}`}
+                                        >
+                                            <div className={`max-w-[85%] sm:max-w-[70%] flex flex-col ${isSent ? 'items-end' : 'items-start'}`}>
+                                                {/* Bubble Wrapper */}
+                                                <div className="relative group/bubble">
+                                                    <div
+                                                        className={`
+                                                            relative rounded-[20px] px-4 py-2.5 shadow-sm overflow-hidden
+                                                            ${isSent
+                                                                ? 'bg-linear-to-br from-indigo-600 via-purple-600 to-purple-700 text-white shadow-purple-500/20'
+                                                                : 'bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl text-slate-800 dark:text-slate-100 border border-slate-200/50 dark:border-slate-700/50 shadow-slate-200/50'
+                                                            }
+                                                            ${isSent ? 'rounded-tr-md' : 'rounded-tl-md'}
+                                                        `}
+                                                    >
+                                                        {isImage && message.media_url && (
+                                                            <div className="relative group/img overflow-hidden rounded-xl mb-1.5 cursor-pointer">
+                                                                <img
+                                                                    src={message.media_url}
+                                                                    alt="shared"
+                                                                    className="max-h-[300px] w-full object-cover transition-transform duration-500 group-hover/img:scale-105"
+                                                                />
+                                                                <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/5 transition-colors" />
+                                                            </div>
+                                                        )}
+                                                        {message.text && (
+                                                            <p className="text-[14px] sm:text-[15px] leading-relaxed relative z-10">
+                                                                {message.text}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Meta Info */}
+                                                <div className={`mt-1.5 flex items-center gap-2 px-1 text-[10px] text-slate-400 dark:text-slate-500 font-medium`}>
+                                                    <span>{formatTime(message.createdAt)}</span>
+                                                    {isSent && (
+                                                        <span className={message.seen ? 'text-purple-500 font-bold' : ''}>
+                                                            {message.seen ? 'Seen' : 'Sent'}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </Motion.div>
+                                    );
+                                })}
+                            </div>
+                        </Motion.div>
+                    ))}
+                </AnimatePresence>
+                <div ref={messagesEndRef} className="h-1" />
             </div>
 
-            {/* ── Image preview ── */}
-            {image && (
-                <div className="px-4 sm:px-6 pb-2">
-                    <div className="relative inline-block">
-                        <img src={imagePreview} alt="preview" className="h-20 w-20 object-cover rounded-xl border-2 border-purple-200 shadow-sm" />
-                        <button
-                            onClick={() => {
-                                setImage(null);
-                                setImagePreview(null);
-                                if (fileInputRef.current) {
-                                    fileInputRef.current.value = "";
-                                }
-                            }}
-                            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md hover:bg-red-600 transition-colors"
+            {/* ── Input Bar Section ── */}
+            <div className="relative z-20 pb-4 sm:pb-8 pt-2 px-4 sm:px-10">
+                {/* Image preview */}
+                <AnimatePresence>
+                    {image && (
+                        <Motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                            className="absolute bottom-full left-4 sm:left-10 mb-4"
                         >
-                            <X className="w-3 h-3" />
-                        </button>
-                    </div>
-                </div>
-            )}
+                            <div className="relative p-1 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700">
+                                <img src={imagePreview} alt="preview" className="h-32 w-32 sm:h-40 sm:w-40 object-cover rounded-xl" />
+                                <button
+                                    onClick={() => {
+                                        setImage(null);
+                                        setImagePreview(null);
+                                        if (fileInputRef.current) fileInputRef.current.value = "";
+                                    }}
+                                    className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-lg hover:bg-red-500 transition-colors border-2 border-white dark:border-slate-800"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </Motion.div>
+                    )}
+                </AnimatePresence>
 
-            {/* ── Input Bar ── */}
-            <div className="sticky bottom-0 bg-white/90 backdrop-blur-xl border-t border-purple-100/50 px-4 sm:px-6 py-3 dark:bg-slate-950/90 dark:border-slate-800">
-                <div className="flex items-center gap-2.5 sm:gap-3 max-w-full">
-                    {/* Image upload */}
-                    <input
-                        type="file"
-                        accept="image/*"
-                        ref={fileInputRef}
-                        onChange={handleImageSelect}
-                        className="hidden"
-                    />
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-10 h-10 flex items-center justify-center border border-purple-300 rounded-xl bg-purple-50 text-purple-500 hover:bg-purple-100 hover:text-purple-600 transition-all shrink-0 dark:border-purple-800 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/40"
-                    >
-                        <ImagePlus className="w-[18px] h-[18px]" />
-                    </button>
-
-                    {/* Text input */}
-                    <div className="flex-1 min-w-0">
+                {/* Main Input Container */}
+                <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl px-2 py-2 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/40 dark:border-slate-800/40 transition-all focus-within:shadow-[0_8px_40px_rgb(0,0,0,0.16)] dark:focus-within:border-purple-500/30">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                        {/* Image upload */}
                         <input
-                            type="text"
-                            value={text}
-                            onChange={(e) => setText(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                            placeholder="Type a message..."
-                            className="w-full px-4 py-2.5 rounded-xl bg-purple-50/70 border border-purple-300 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-300/50 focus:border-purple-200 transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:placeholder-slate-500 dark:focus:ring-purple-500/50 dark:focus:border-purple-500"
+                            type="file"
+                            accept="image/*"
+                            ref={fileInputRef}
+                            onChange={handleImageSelect}
+                            className="hidden"
                         />
-                    </div>
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-purple-600 transition-all shrink-0 dark:hover:bg-slate-800 dark:text-slate-500 dark:hover:text-purple-400"
+                        >
+                            <ImagePlus className="w-[20px] h-[20px]" />
+                        </button>
 
-                    {/* Send button */}
-                    <button
-                        onClick={sendMessage}
-                        disabled={sending || (!text.trim() && !image)}
-                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-linear-to-br from-purple-500 to-purple-600 text-white shadow-[0_2px_10px_rgba(147,51,234,0.35)] hover:shadow-[0_4px_16px_rgba(147,51,234,0.45)] hover:scale-[1.03] active:scale-95 transition-all shrink-0"
-                    >
-                        <Send className="w-[18px] h-[18px]" />
-                    </button>
+                        {/* Text input */}
+                        <div className="flex-1 min-w-0">
+                            <input
+                                type="text"
+                                value={text}
+                                onChange={(e) => setText(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                                placeholder="Message..."
+                                className="w-full px-2 py-2.5 bg-transparent text-[15px] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 border-none focus:outline-none focus:ring-0"
+                            />
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-1.5 pr-1">
+                            <button
+                                onClick={sendMessage}
+                                disabled={sending || (!text.trim() && !image)}
+                                className={`
+                                    w-10 h-10 flex items-center justify-center rounded-xl transition-all active:scale-95
+                                    ${(text.trim() || image) && !sending
+                                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/35 hover:bg-purple-700 hover:shadow-purple-500/50'
+                                        : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600'
+                                    }
+                                `}
+                            >
+                                <Send className={`w-[18px] h-[18px] transition-transform ${text.trim() && 'translate-x-0.5 -translate-y-0.5'}`} />
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

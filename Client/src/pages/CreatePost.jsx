@@ -44,7 +44,7 @@ const CreatePost = () => {
             if (data.success) {
                 // Invalidate feed query to force refresh
                 queryClient.invalidateQueries({ queryKey: ['feed'] });
-                
+
                 toast.success(data.message || "Post created successfully", { id: loadingToast });
                 setContent("");
                 setImages([]);

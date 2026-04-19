@@ -31,7 +31,7 @@ const BottomBar = () => {
     const leftItems = menuItemsData.slice(0, 3);   // indices 0-2
     const rightItems = menuItemsData.slice(3);        // indices 3-5
 
-    const NavItem = ({ to, Icon, colorIndex, isEnd }) => {
+    const NavItem = ({ to, Icon: Comp, colorIndex, isEnd }) => { // eslint-disable-line no-unused-vars
         const color = COLOR_MAP[colorIndex % COLOR_MAP.length];
         const dot = DOT_MAP[colorIndex % DOT_MAP.length];
         return (
@@ -44,7 +44,7 @@ const BottomBar = () => {
                     <>
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200
                             ${isActive ? color.bg : 'bg-transparent'}`}>
-                            <Icon className={`w-[19px] h-[19px] transition-all duration-200
+                            <Comp className={`w-[19px] h-[19px] transition-all duration-200
                                 ${isActive ? `${color.icon} stroke-[2.3px]` : 'text-slate-500 dark:text-slate-400 stroke-[1.8px]'}`}
                             />
                         </div>

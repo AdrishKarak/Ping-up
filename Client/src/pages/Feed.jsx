@@ -7,7 +7,7 @@ import RecentMessage from '../components/RecentMessage';
 import { useAuth } from '@clerk/react';
 import api from '../api/axios';
 import { PostSkeleton } from '../components/Skeletons';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { useInfiniteQuery } from '@tanstack/react-query';
 
 const Feed = () => {

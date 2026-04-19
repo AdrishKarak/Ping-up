@@ -1,7 +1,7 @@
 import { assets } from '../assets/assets';
 import { Star } from 'lucide-react';
 import { SignIn } from '@clerk/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 const FloatingOrb = ({ style, delay = 0 }) => (
     <div
@@ -35,9 +35,6 @@ const ParticleDot = ({ x, y, size, opacity, delay }) => (
 const Login = () => {
     const containerRef = useRef(null);
     const glowRef = useRef(null);
-    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-    const [isHovered, setIsHovered] = useState(false);
-    const [mounted, setMounted] = useState(false);
 
     const particles = Array.from({ length: 18 }, (_, i) => ({
         x: `${5 + (i * 5.5) % 90}%`,
@@ -48,13 +45,11 @@ const Login = () => {
     }));
 
     useEffect(() => {
-        setMounted(true);
         const handleMouseMove = (e) => {
             if (!containerRef.current) return;
             const rect = containerRef.current.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            setMousePos({ x, y });
             if (glowRef.current) {
                 glowRef.current.style.left = `${x}px`;
                 glowRef.current.style.top = `${y}px`;

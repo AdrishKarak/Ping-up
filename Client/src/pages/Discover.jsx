@@ -5,7 +5,7 @@ import { useAuth } from '@clerk/react';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 import { UserCardSkeleton } from '../components/Skeletons';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 
 const Discover = () => {
     const [input, setInput] = useState("");
@@ -77,14 +77,14 @@ const Discover = () => {
                     ) : (
                         <AnimatePresence>
                             {users.map((user) => (
-                                <motion.div
+                                <Motion.div
                                     key={user._id}
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     transition={{ duration: 0.2 }}
                                 >
                                     <UserCard user={user} />
-                                </motion.div>
+                                </Motion.div>
                             ))}
                         </AnimatePresence>
                     )}

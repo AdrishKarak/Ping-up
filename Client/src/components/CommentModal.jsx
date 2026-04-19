@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Send, CornerDownRight, MessageCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@clerk/react';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
@@ -26,9 +26,9 @@ const CommentItem = ({ comment, allComments, onReply, depth = 0 }) => {
     return (
         <div className={`mt-3 ${depth > 0 ? 'ml-4 sm:ml-8 border-l-2 border-slate-100 dark:border-slate-800 pl-4' : ''}`}>
             <div className="flex gap-3">
-                <img 
-                    src={comment.user.profile_picture} 
-                    alt={comment.user.full_name} 
+                <img
+                    src={comment.user.profile_picture}
+                    alt={comment.user.full_name}
                     className="w-8 h-8 rounded-full object-cover shrink-0"
                 />
                 <div className="flex-1 min-w-0">
@@ -41,20 +41,20 @@ const CommentItem = ({ comment, allComments, onReply, depth = 0 }) => {
                                 {getTimeAgo(comment.createdAt)}
                             </span>
                         </div>
-                        <p className="text-[13px] text-slate-700 dark:text-slate-300 break-words leading-relaxed">
+                        <p className="text-[13px] text-slate-700 dark:text-slate-300 wrap-break-word leading-relaxed">
                             {comment.content}
                         </p>
                     </div>
-                    
+
                     <div className="flex items-center gap-4 mt-1 ml-2">
-                        <button 
+                        <button
                             onClick={() => onReply(comment)}
                             className="text-[11px] font-bold text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
                         >
                             Reply
                         </button>
                         {replies.length > 0 && (
-                            <button 
+                            <button
                                 onClick={() => setShowReplies(!showReplies)}
                                 className="text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors flex items-center gap-1"
                             >
@@ -67,19 +67,19 @@ const CommentItem = ({ comment, allComments, onReply, depth = 0 }) => {
 
             <AnimatePresence>
                 {showReplies && replies.map(reply => (
-                    <motion.div
+                    <Motion.div
                         key={reply._id}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -10 }}
                     >
-                        <CommentItem 
-                            comment={reply} 
-                            allComments={allComments} 
-                            onReply={onReply} 
-                            depth={depth + 1} 
+                        <CommentItem
+                            comment={reply}
+                            allComments={allComments}
+                            onReply={onReply}
+                            depth={depth + 1}
                         />
-                    </motion.div>
+                    </Motion.div>
                 ))}
             </AnimatePresence>
         </div>
@@ -103,7 +103,7 @@ const CommentModal = ({ postId, onClose, onCommentAdded }) => {
             if (data.success) {
                 setComments(data.comments);
             }
-        } catch (error) {
+        } catch {
             toast.error("Failed to load comments");
         } finally {
             setLoading(false);
@@ -137,7 +137,7 @@ const CommentModal = ({ postId, onClose, onCommentAdded }) => {
                     onCommentAdded();
                 }
             }
-        } catch (error) {
+        } catch {
             toast.error("Failed to post comment");
         } finally {
             setIsSubmitting(false);
@@ -147,8 +147,8 @@ const CommentModal = ({ postId, onClose, onCommentAdded }) => {
     const topLevelComments = comments.filter(c => !c.parent_comment);
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4 py-6 sm:p-6">
-            <motion.div 
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4 py-6 sm:p-6">
+            <Motion.div
                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -163,7 +163,7 @@ const CommentModal = ({ postId, onClose, onCommentAdded }) => {
                             {comments.length}
                         </span>
                     </div>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                     >
@@ -179,9 +179,9 @@ const CommentModal = ({ postId, onClose, onCommentAdded }) => {
                         </div>
                     ) : topLevelComments.length > 0 ? (
                         topLevelComments.map(comment => (
-                            <CommentItem 
-                                key={comment._id} 
-                                comment={comment} 
+                            <CommentItem
+                                key={comment._id}
+                                comment={comment}
                                 allComments={comments}
                                 onReply={(c) => {
                                     setReplyTo(c);
@@ -221,7 +221,7 @@ const CommentModal = ({ postId, onClose, onCommentAdded }) => {
                             placeholder={replyTo ? "Write a reply..." : "Write a comment..."}
                             className="flex-1 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all dark:text-slate-100 dark:placeholder-slate-500"
                         />
-                        <button 
+                        <button
                             disabled={!newComment.trim() || isSubmitting}
                             className="w-10 h-10 flex items-center justify-center rounded-2xl bg-purple-600 text-white disabled:opacity-50 disabled:bg-slate-400 shadow-md shadow-purple-200 dark:shadow-none transition-all active:scale-90"
                         >
@@ -229,7 +229,7 @@ const CommentModal = ({ postId, onClose, onCommentAdded }) => {
                         </button>
                     </form>
                 </div>
-            </motion.div>
+            </Motion.div>
         </div>
     );
 };
