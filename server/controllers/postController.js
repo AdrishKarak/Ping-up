@@ -4,6 +4,7 @@ import { toFile } from "@imagekit/nodejs";
 import Post from "../models/Post.js";
 import User from "../models/User.js";
 import { redisClient } from '../configs/redis.js';
+import { clearUserProfileCache } from "./userController.js";
 
 const clearUserFeedCache = async () => {
     if (!redisClient.isReady) return;
@@ -157,11 +158,15 @@ export const likePost = async (req, res) => {
             post.likes_count = post.likes_count.filter(user => user !== userId)
             await post.save();
             await clearUserFeedCache();
+            await clearUserProfileCache(userId);
+            await clearUserProfileCache(post.user.toString());
             return res.status(200).json({ success: true, message: "Post unliked successfully" });
         } else {
             post.likes_count.push(userId);
             await post.save();
             await clearUserFeedCache();
+            await clearUserProfileCache(userId);
+            await clearUserProfileCache(post.user.toString());
             return res.status(200).json({ success: true, message: "Post liked successfully" });
         }
     } catch (error) {

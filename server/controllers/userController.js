@@ -7,7 +7,7 @@ import { inngest } from "../inngest/index.js";
 import fs from "fs";
 import { redisClient } from "../configs/redis.js";
 
-const clearUserProfileCache = async (profileId) => {
+export const clearUserProfileCache = async (profileId) => {
     if (!redisClient.isReady) return;
     try {
         await Promise.all([
@@ -353,10 +353,11 @@ export const getUserProfile = async (req, res) => {
         }
 
         const posts = await Post.find({ user: profileId }).populate('user')
+        const likedPosts = await Post.find({ likes_count: profileId }).populate('user')
         
         const isOnline = redisClient.isReady ? !!(await redisClient.get(`presence:${profileId}`)) : false;
         const profileWithPresence = { ...profile.toObject(), isOnline };
-        const responseData = { success: true, profile: profileWithPresence, posts };
+        const responseData = { success: true, profile: profileWithPresence, posts, likedPosts };
 
         if (redisClient.isReady) {
             try {

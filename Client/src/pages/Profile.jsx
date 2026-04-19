@@ -21,6 +21,7 @@ const Profile = () => {
     const { profileId } = useParams();
     const [user, setUser] = useState(null);
     const [posts, setPosts] = useState([]);
+    const [likedPosts, setLikedPosts] = useState([]);
     const [showEditProfile, setShowEditProfile] = useState(false);
     const [activeTab, setActiveTab] = useState("posts");
 
@@ -34,6 +35,7 @@ const Profile = () => {
             })
             setUser(data.profile);
             setPosts(data.posts || []);
+            setLikedPosts(data.likedPosts || []);
         } catch (error) {
             console.log(error);
         }
@@ -64,12 +66,17 @@ const Profile = () => {
         p.image_urls.map((url, i) => ({ url, postId: p._id, index: i }))
     );
 
-    const likedPosts = posts.filter(
-        (p) => p.likes_count && p.likes_count.includes(currentUser?._id)
-    );
+
 
     const handlePostDelete = (postId) => {
         setPosts(prev => prev.filter(p => p._id !== postId));
+        setLikedPosts(prev => prev.filter(p => p._id !== postId));
+    };
+
+    const handleLikeToggle = (postId, isLiked) => {
+        if (!isLiked && activeTab === "likes") {
+            setLikedPosts(prev => prev.filter(p => p._id !== postId));
+        }
     };
 
     const renderTabContent = () => {
@@ -78,7 +85,7 @@ const Profile = () => {
                 return userPosts.length > 0 ? (
                     <div className="space-y-4 sm:space-y-5">
                         {userPosts.map((post) => (
-                            <PostCard key={post._id} post={post} onDelete={handlePostDelete} />
+                            <PostCard key={post._id} post={post} onDelete={handlePostDelete} onLikeToggle={handleLikeToggle} />
                         ))}
                     </div>
                 ) : (
@@ -122,7 +129,7 @@ const Profile = () => {
                 return likedPosts.length > 0 ? (
                     <div className="space-y-4 sm:space-y-5">
                         {likedPosts.map((post) => (
-                            <PostCard key={post._id} post={post} onDelete={handlePostDelete} />
+                            <PostCard key={post._id} post={post} onDelete={handlePostDelete} onLikeToggle={handleLikeToggle} />
                         ))}
                     </div>
                 ) : (

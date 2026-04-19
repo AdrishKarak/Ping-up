@@ -46,7 +46,7 @@ const DeleteModal = ({ onConfirm, onCancel, isDeleting }) => (
     </div>
 );
 
-const PostCard = ({ post, onDelete }) => {
+const PostCard = ({ post, onDelete, onLikeToggle }) => {
     const postWithHasTags = post.content.replace(/(#\w+)/g, '<span class="text-purple-600 dark:text-purple-400 font-medium hover:underline cursor-pointer">$1</span>');
     const postWithMentions = postWithHasTags.replace(/(@\w+)/g, '<span class="text-blue-500 dark:text-blue-400 font-medium hover:underline cursor-pointer">$1</span>');
 
@@ -82,6 +82,10 @@ const PostCard = ({ post, onDelete }) => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!data.success) throw new Error(data.message);
+            
+            if (onLikeToggle) {
+                onLikeToggle(post._id, !previousLiked);
+            }
             
             // Invalidate feed query to sync with server in background
             queryClient.invalidateQueries({ queryKey: ['feed'] });
