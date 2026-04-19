@@ -1,136 +1,136 @@
 # Ping-up
 
-Ping-up is a social networking app with a React + Vite frontend and a small Express + MongoDB backend. The current client already includes authenticated routing with Clerk, a feed, stories, messaging screens, profile pages, people discovery, and create-post UI. Much of the frontend still runs on local dummy data, while the backend is currently a lightweight server and database connection layer.
+Ping-up is a modern, full-stack social networking platform designed for real-time interactions, media sharing, and social connectivity. Built with a high-performance React 19 frontend and a robust Express 5 backend, Ping-up leverages cutting-edge technologies like Redis for caching, TanStack Query for state synchronization, and Inngest for event-driven background workflows.
 
-## Tech Stack
+## 🚀 Tech Stack
 
-- Frontend: React 19, Vite, React Router, Tailwind CSS, Clerk
-- Backend: Express, MongoDB with Mongoose
-- Tooling: ESLint, Nodemon
+### Frontend
+- **Framework:** React 19 + Vite
+- **Styling:** Tailwind CSS 4 (with modern utility-first approach)
+- **State Management:** Redux Toolkit (for global UI & user state)
+- **Data Fetching:** TanStack Query (React Query) for optimized server state management
+- **Routing:** React Router 7
+- **Authentication:** Clerk (Social & Email login)
+- **Animations:** Framer Motion
+- **Icons:** Lucide React
+- **Notifications:** React Hot Toast
 
-## Current Features
+### Backend
+- **Runtime:** Node.js (ES Modules)
+- **Framework:** Express 5
+- **Database:** MongoDB with Mongoose ODM
+- **Caching & Rate Limiting:** Redis
+- **Background Jobs:** Inngest (Serverless-style event delivery)
+- **Media Management:** ImageKit.io (Cloud storage & real-time transformations)
+- **Authentication:** Clerk Express Middleware
+- **Email Service:** Nodemailer (via SMTP)
+- **File Uploads:** Multer & ImageKit.io
 
-- Clerk-based auth wrapper in the client
-- Feed screen with stories, posts, and recent messages
-- Profile screen with posts, media, and likes tabs
-- Discover people search UI
-- Messages list and chat route
-- Create-post page and reusable social UI components
-- Express server with CORS, JSON parsing, and MongoDB connection
+## ✨ Key Features
 
-## Repository Structure
+- **🌓 Dynamic Theme:** Seamless support for Dark and Light modes with a premium aesthetic.
+- **💬 Real-time Messaging:** Integrated chat system with presence indicators and instant message delivery.
+- **📱 Responsive Feed:** A dynamic social feed supporting text posts, multi-image galleries, and interactive elements.
+- **🖼️ Stories:** transient 24-hour media sharing powered by background workers that automatically handle story expiration.
+- **👥 Connections:** Comprehensive follow/unfollow system and connection requests with automated email notifications.
+- **❤️ Interactions:** Real-time-like likes and comments with immediate UI feedback and cross-tab synchronization.
+- **🔍 Discovery:** Robust user search and discovery features to find friends and colleagues.
+- **🛡️ Secure & Scalable:** Redis-backed rate limiting to prevent API abuse and optimized caching for lightning-fast profile loads.
+
+## 📁 Repository Structure
 
 ```text
 Ping-up/
 ├── Client/                # React + Vite frontend
 │   ├── public/            # Static assets
 │   └── src/
-│       ├── assets/        # Images and dummy data
-│       ├── components/    # Reusable UI components
-│       └── pages/         # Route-level screens
+│       ├── api/           # Axios instance & API services
+│       ├── app/           # Redux store & global providers
+│       ├── components/    # Reusable UI components & modals
+│       ├── features/      # Redux slices & feature-specific logic
+│       ├── pages/         # Route-level screen components
+│       └── assets/        # Stylesheets & static images
 ├── server/                # Express backend
-│   ├── configs/           # Server configuration
-│   ├── ingest/            # Inngest-related code
-│   └── models/            # Mongoose models
+│   ├── configs/           # Redis, ImageKit, Multer, & DB configurations
+│   ├── controllers/       # Business logic for Users, Posts, Stories, etc.
+│   ├── inngest/           # Event-driven functions (e.g., auto-delete stories)
+│   ├── middlewares/       # Auth guards, Rate limiters, & Error handlers
+│   ├── models/            # Mongoose schemas for MongoDB
+│   └── routes/            # API endpoint definitions
 └── readme.md
 ```
 
-## Prerequisites
+## 🛠️ Prerequisites
 
-- Node.js 18+ recommended
-- npm
-- MongoDB connection string
-- Clerk app keys for the frontend
+- **Node.js:** 18+ recommended
+- **MongoDB:** Local instance or MongoDB Atlas
+- **Redis:** Local instance or Upstash/RedisCloud
+- **Clerk:** Active account for Auth keys
+- **ImageKit:** Account for media storage
 
-## Environment Variables
+## 🔑 Environment Variables
 
-Create local environment files and keep secrets out of source control.
+Create local environment files to manage your credentials securely.
 
 ### `server/.env`
-
 ```env
-MONGODB_URL=mongodb://127.0.0.1:27017
+MONGODB_URL=your_mongodb_connection_string
 PORT=4000
+REDIS_URL=your_redis_connection_url
+CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
+IMAGEKIT_PUBLIC_KEY=your_imagekit_public_key
+IMAGEKIT_PRIVATE_KEY=your_imagekit_private_key
+IMAGEKIT_URL_ENDPOINT=your_imagekit_url_endpoint
+SMTP_USER=your_smtp_user
+SMTP_PASS=your_smtp_password
+SENDER_EMAIL=your_verified_sender_email
+FRONTEND_URL=http://localhost:5173
 ```
 
-The server app connects to `${MONGODB_URL}/Ping-up`, so the database name is appended in code.
-
 ### `Client/.env`
-
 ```env
 VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
 ```
 
-The frontend uses `ClerkProvider`, so a valid Clerk publishable key is required for the app to boot correctly.
+## 🚀 Installation & Setup
 
-## Installation
+1. **Install Frontend Dependencies:**
+   ```bash
+   cd Client
+   npm install
+   ```
 
-Install dependencies separately for the client and server.
+2. **Install Backend Dependencies:**
+   ```bash
+   cd server
+   npm install
+   ```
 
-```bash
-cd Client
-npm install
-```
+3. **Run the Project:**
+   Open two terminals:
+   - **Terminal 1 (Backend):** `cd server && npm run server`
+   - **Terminal 2 (Frontend):** `cd Client && npm run dev`
 
-```bash
-cd server
-npm install
-```
-
-## Running the Project
-
-Start the backend:
-
-```bash
-cd server
-npm run server
-```
-
-Start the frontend in a second terminal:
-
-```bash
-cd Client
-npm run dev
-```
-
-Default local URLs:
-
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:4000`
-
-## Available Scripts
+## 📜 Available Scripts
 
 ### Frontend (`Client/`)
-
-- `npm run dev`: start the Vite development server
-- `npm run build`: create a production build
-- `npm run preview`: preview the production build locally
-- `npm run lint`: run ESLint
+- `npm run dev`: Start Vite development server
+- `npm run build`: Generate production-ready bundle
+- `npm run lint`: Run ESLint checks
+- `npm run preview`: Preview production build locally
 
 ### Backend (`server/`)
+- `npm run server`: Start API with hot-reload (Nodemon)
+- `npm run start`: Start API in production mode
 
-- `npm run server`: start the API with Nodemon
-- `npm run start`: start the API with Node
+## 🧪 Verification
 
-## Verification
-
-For the current codebase, the minimum verification steps are:
-
+To ensure code quality and build stability:
 ```bash
-cd Client
-npm run lint
-npm run build
+cd Client && npm run lint && npm run build
 ```
 
-## Notes
+---
+*Developed with a focus on visual excellence and performance.*
 
-- The frontend currently relies heavily on mock data from `Client/src/assets/assets.js`.
-- The backend is connected to MongoDB but is still minimal and does not yet expose the social features used by the UI.
-- Build output is generated in `Client/dist/` and should not be edited manually.
-
-## Next Steps
-
-- Replace dummy client data with API calls
-- Add backend routes for posts, users, messages, and connections
-- Protect server routes with auth
-- Add automated tests for the frontend and backend
