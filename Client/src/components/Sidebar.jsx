@@ -4,6 +4,7 @@ import { LogOut, PenSquare } from 'lucide-react';
 import { useClerk, useUser } from '@clerk/react';
 import { menuItemsData, assets } from '../assets/assets';
 import { useSelector } from 'react-redux';
+import { motion } from 'framer-motion';
 
 const Sidebar = () => {
     const { signOut, openUserProfile } = useClerk();
@@ -15,7 +16,20 @@ const Sidebar = () => {
             {/* Logo */}
             <div className="border-b border-slate-100 dark:border-slate-800">
                 <NavLink to="/" className="flex items-center justify-center p-3">
-                    <img src={assets.logo} alt="Ping Up" className="w-full h-auto object-contain max-h-12" />
+                    <motion.img 
+                        src={assets.logo} 
+                        alt="Ping Up" 
+                        className="w-full h-auto object-contain max-h-12"
+                        initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
+                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                        whileHover={{ scale: 1.05, rotate: 2 }}
+                        whileTap={{ scale: 0.95, rotate: -2 }}
+                        transition={{ 
+                            type: "spring",
+                            stiffness: 260,
+                            damping: 20 
+                        }}
+                    />
                 </NavLink>
             </div>
 
