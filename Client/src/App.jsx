@@ -1,14 +1,5 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Login from "./pages/Login.jsx";
-import Messages from "./pages/Messages.jsx";
-import Feed from "./pages/Feed.jsx";
-import ChatBox from "./pages/ChatBox.jsx";
-import Connections from "./pages/Connections.jsx";
-import Discover from "./pages/Discover.jsx";
-import Profile from "./pages/Profile.jsx";
-import CreatePost from "./pages/CreatePost.jsx";
-import Layout from "./pages/Layout.jsx"
 import { useUser, useAuth } from '@clerk/react';
 import Loading from "./components/Loading.jsx";
 import { Toaster } from 'react-hot-toast';
@@ -19,6 +10,17 @@ import { fetchConnections } from './features/connections/connectionSlice.js';
 import Notification from './components/Notification.jsx';
 import api from './api/axios.js';
 import { setLatestMessage } from './features/messages/messagesSlice.js';
+
+// Lazy load components
+const Login = lazy(() => import("./pages/Login.jsx"));
+const Messages = lazy(() => import("./pages/Messages.jsx"));
+const Feed = lazy(() => import("./pages/Feed.jsx"));
+const ChatBox = lazy(() => import("./pages/ChatBox.jsx"));
+const Connections = lazy(() => import("./pages/Connections.jsx"));
+const Discover = lazy(() => import("./pages/Discover.jsx"));
+const Profile = lazy(() => import("./pages/Profile.jsx"));
+const CreatePost = lazy(() => import("./pages/CreatePost.jsx"));
+const Layout = lazy(() => import("./pages/Layout.jsx"));
 
 const App = () => {
     const { user, isLoaded } = useUser();
@@ -68,23 +70,25 @@ const App = () => {
     }, [user?._id, dispatch]);
 
     if (!isLoaded) return <Loading />;
+    
     return (
         <div>
             <Toaster />
             <Notification />
-            <Routes>
-                <Route path="/" element={!user ? <Login /> : <Layout />}>
-                    < Route index element={<Feed />} />
-                    <Route path='messages' element={<Messages />} />
-                    <Route path='messages/:userid' element={<ChatBox />} />
-                    <Route path='connections' element={<Connections />} />
-                    <Route path='discover' element={<Discover />} />
-                    <Route path='profile' element={<Profile />} />
-                    <Route path='profile/:profileId' element={<Profile />} />
-                    <Route path='create-post' element={<CreatePost />} />
-
-                </Route>
-            </Routes>
+            <Suspense fallback={<Loading />}>
+                <Routes>
+                    <Route path="/" element={!user ? <Login /> : <Layout />}>
+                        <Route index element={<Feed />} />
+                        <Route path='messages' element={<Messages />} />
+                        <Route path='messages/:userid' element={<ChatBox />} />
+                        <Route path='connections' element={<Connections />} />
+                        <Route path='discover' element={<Discover />} />
+                        <Route path='profile' element={<Profile />} />
+                        <Route path='profile/:profileId' element={<Profile />} />
+                        <Route path='create-post' element={<CreatePost />} />
+                    </Route>
+                </Routes>
+            </Suspense>
         </div>
     );
 };

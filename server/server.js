@@ -17,9 +17,28 @@ import commentRouter from "./routes/commentRoutes.js";
 
 const app = express();
 
-await connectDB();
-await connectRedis();
-await initMessagePubSub();
+// Connect to DB and Redis in parallel
+try {
+    await Promise.all([
+        connectDB(),
+        connectRedis(),
+        initMessagePubSub()
+    ]);
+    console.log("All connections established");
+} catch (err) {
+    console.error("Connection error during startup:", err);
+    process.exit(1);
+}
+
+// Self-pinging mechanism to keep Render instance awake
+const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL;
+if (RENDER_EXTERNAL_URL) {
+    setInterval(() => {
+        fetch(`${RENDER_EXTERNAL_URL}/api/heartbeat`)
+            .then(() => console.log('Self-ping successful'))
+            .catch(err => console.error('Self-ping failed:', err));
+    }, 14 * 60 * 1000); // Ping every 14 minutes
+}
 
 // Dynamic import to ensure rateLimiter is initialized after Redis connection
 const { rateLimiter } = await import('./middlewares/rateLimiter.js');
@@ -33,6 +52,11 @@ app.use(heartbeatMiddleware);
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
+
+app.get('/api/heartbeat', (req, res) => {
+    res.status(200).json({ status: 'alive' });
+});
+
 app.use('/api/inngest', serve({ client: inngest, functions }));
 
 app.use('/api/user', rateLimiter, userRouter);

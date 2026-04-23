@@ -105,7 +105,7 @@ export const sendMessage = async (req, res) => {
         });
 
         //Send message to the receiver using Redis Pub/Sub
-        const messageWithUserData = await Message.findById(message._id).populate('from_user_id');
+        const messageWithUserData = await message.populate('from_user_id');
 
         if (pubClient.isReady) {
             await pubClient.publish('MESSAGES', JSON.stringify({
@@ -119,18 +119,23 @@ export const sendMessage = async (req, res) => {
             }
         }
 
+        // Send response to the sender immediately after critical tasks
+        res.status(201).json({ success: true, message });
+
+        // Non-critical tasks can run in the background
         try {
-            await inngest.send({
+            inngest.send({
                 name: "app/message.sent",
                 data: { messageId: message._id }
-            });
+            }).catch(error => console.warn('Failed to schedule message email', error.message));
         } catch (error) {
             console.warn('Failed to schedule message email', error.message);
         }
-
-        return res.status(201).json({ success: true, message });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        if (!res.headersSent) {
+            return res.status(500).json({ success: false, message: error.message });
+        }
+        console.error('Error after headers sent:', error.message);
     } finally {
         if (media && media.path && fs.existsSync(media.path)) {
             fs.unlinkSync(media.path);

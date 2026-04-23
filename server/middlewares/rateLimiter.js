@@ -12,7 +12,7 @@ export const rateLimiter = rateLimit({
             if (redisClient.isReady) {
                 return redisClient.sendCommand(args);
             }
-            return Promise.resolve();
+            return null;
         },
     }),
     message: {
@@ -31,7 +31,7 @@ export const authLimiter = rateLimit({
             if (redisClient.isReady) {
                 return redisClient.sendCommand(args);
             }
-            return Promise.resolve();
+            return null;
         },
     }),
     message: {

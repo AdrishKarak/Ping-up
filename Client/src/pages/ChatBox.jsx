@@ -18,7 +18,6 @@ const ChatBox = () => {
     const [image, setImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [sending, setSending] = useState(false);
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const navigate = useNavigate();
@@ -86,16 +85,41 @@ const ChatBox = () => {
             return;
         }
 
-        setSending(true);
+        const messageText = text.trim();
+        const currentImage = image;
+        const currentImagePreview = imagePreview;
+
+        // Optimistic message
+        const optimisticMessage = {
+            _id: `temp-${Date.now()}`,
+            from_user_id: currentUser,
+            to_user_id: userid,
+            text: messageText,
+            media_url: currentImagePreview,
+            message_type: currentImage ? 'image' : 'text',
+            createdAt: new Date().toISOString(),
+            isOptimistic: true
+        };
+
+        // Add to UI immediately
+        setMessages((prev) => [...prev, optimisticMessage]);
+        
+        // Clear inputs immediately
+        setText("");
+        setImage(null);
+        setImagePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
 
         try {
             const token = await getToken();
             const formData = new FormData();
             formData.append("to_user_id", userid);
-            formData.append("text", text.trim());
+            formData.append("text", messageText);
 
-            if (image) {
-                formData.append("media", image);
+            if (currentImage) {
+                formData.append("media", currentImage);
                 formData.append("media_type", "image");
             }
 
@@ -107,21 +131,26 @@ const ChatBox = () => {
                 throw new Error(data.message);
             }
 
-            setMessages((prev) => [...prev, {
-                ...data.message,
-                from_user_id: currentUser,
-                to_user_id: userid
-            }]);
-            setText("");
-            setImage(null);
-            setImagePreview(null);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
+            // Replace optimistic message with the real one from server
+            setMessages((prev) => prev.map(msg => 
+                msg._id === optimisticMessage._id ? { 
+                    ...data.message, 
+                    from_user_id: currentUser, 
+                    to_user_id: userid 
+                } : msg
+            ));
+
         } catch (error) {
+            console.error(error);
             toast.error(error.response?.data?.message || error.message || "Failed to send message");
-        } finally {
-            setSending(false);
+            // Remove optimistic message on failure
+            setMessages((prev) => prev.filter(msg => msg._id !== optimisticMessage._id));
+            // Restore text
+            setText(messageText);
+            if (currentImage) {
+                setImage(currentImage);
+                setImagePreview(currentImagePreview);
+            }
         }
     }
 
@@ -370,10 +399,10 @@ const ChatBox = () => {
                         <div className="flex items-center gap-1.5 pr-1">
                             <button
                                 onClick={sendMessage}
-                                disabled={sending || (!text.trim() && !image)}
+                                disabled={!text.trim() && !image}
                                 className={`
                                     w-10 h-10 flex items-center justify-center rounded-xl transition-all active:scale-95
-                                    ${(text.trim() || image) && !sending
+                                    ${(text.trim() || image)
                                         ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/35 hover:bg-purple-700 hover:shadow-purple-500/50'
                                         : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600'
                                     }
