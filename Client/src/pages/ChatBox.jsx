@@ -238,14 +238,6 @@ const ChatBox = () => {
 
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                     <button
-                        onClick={() => startCall('audio', {}, userid)}
-                        disabled={callLoading || !!activeCall}
-                        title="Start audio call"
-                        className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-white text-slate-500 hover:text-purple-600 hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 border border-slate-100 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:text-purple-400"
-                    >
-                        <Phone className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
-                    </button>
-                    <button
                         onClick={() => startCall('video', {}, userid)}
                         disabled={callLoading || !!activeCall}
                         title="Start video call"

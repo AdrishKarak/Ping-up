@@ -10,6 +10,7 @@ import {
     CallControls,
     SpeakerLayout,
     StreamCall,
+    StreamTheme,
     StreamVideo,
     StreamVideoClient
 } from '@stream-io/video-react-sdk';
@@ -20,7 +21,7 @@ const CallContext = createContext(null);
 const ActiveCall = ({ client, call, onLeave }) => (
     <StreamVideo client={client}>
         <StreamCall call={call}>
-            <div className="fixed inset-0 z-100 bg-slate-950 text-white flex flex-col">
+            <StreamTheme className="fixed inset-0 z-[100] bg-slate-950 text-white flex flex-col">
                 <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-white/10">
                     <div className="min-w-0">
                         <p className="text-sm font-semibold truncate">Ping-up call</p>
@@ -35,14 +36,14 @@ const ActiveCall = ({ client, call, onLeave }) => (
                     </button>
                 </div>
 
-                <div className="flex-1 min-h-0">
+                <div className="flex-1 min-h-0 relative">
                     <SpeakerLayout />
                 </div>
 
                 <div className="px-4 py-4 border-t border-white/10 flex justify-center">
                     <CallControls onLeave={onLeave} />
                 </div>
-            </div>
+            </StreamTheme>
         </StreamCall>
     </StreamVideo>
 );
