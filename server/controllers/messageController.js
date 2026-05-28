@@ -1,4 +1,5 @@
 import fs from 'fs';
+import crypto from 'crypto';
 import Message from '../models/Message.js';
 import imagekit from '../configs/imagekit.js';
 import { toFile } from '@imagekit/nodejs';
@@ -222,7 +223,7 @@ export const getCallToken = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        const callId = `one-to-one-${[userId, to_user_id].sort().join('-')}`;
+        const callId = crypto.createHash('md5').update([userId, to_user_id].sort().join('-')).digest('hex');
         const streamClient = getStreamClient();
         const token = streamClient.generateUserToken({
             user_id: userId,
@@ -264,7 +265,7 @@ export const sendCallInvite = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        const callId = `one-to-one-${[userId, to_user_id].sort().join('-')}`;
+        const callId = crypto.createHash('md5').update([userId, to_user_id].sort().join('-')).digest('hex');
         const invite = {
             type: 'call-invite',
             from_user_id: currentUser,
