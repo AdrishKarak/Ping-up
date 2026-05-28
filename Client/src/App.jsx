@@ -4,7 +4,7 @@ import { useUser, useAuth } from '@clerk/react';
 import Loading from "./components/Loading.jsx";
 import { Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { fetchUser } from './features/user/userSlice.js';
 import { fetchConnections } from './features/connections/connectionSlice.js';
 import Notification from './components/Notification.jsx';
@@ -26,6 +26,7 @@ const App = () => {
     const { user, isLoaded } = useUser();
     const { getToken } = useAuth();
     const dispatch = useDispatch();
+    const currentUser = useSelector((state) => state.user.value);
 
     useEffect(() => {
         if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -45,10 +46,10 @@ const App = () => {
     }, [user, getToken, dispatch]);
 
     useEffect(() => {
-        if (!user?._id) return;
+        if (!currentUser?._id) return;
 
         const baseURL = api.defaults.baseURL || import.meta.env.VITE_BASEURL;
-        const eventSource = new EventSource(`${baseURL}/api/message/sse/${user._id}`);
+        const eventSource = new EventSource(`${baseURL}/api/message/sse/${currentUser._id}`);
 
         eventSource.onmessage = (event) => {
             const data = JSON.parse(event.data);
@@ -71,7 +72,7 @@ const App = () => {
         };
 
         return () => eventSource.close();
-    }, [user?._id, dispatch]);
+    }, [currentUser?._id, dispatch]);
 
     if (!isLoaded) return <Loading />;
     

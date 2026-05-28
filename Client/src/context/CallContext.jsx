@@ -104,7 +104,7 @@ export const CallProvider = ({ children }) => {
             await call.join({
                 create: true,
                 ring: options.sendInvite !== false,
-                notify: options.sendInvite !== false,
+                notify: false,
                 video: callKind === 'video',
                 data: {
                     members: [
