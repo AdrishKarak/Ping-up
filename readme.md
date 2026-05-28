@@ -7,6 +7,7 @@ Ping-up is a modern, full-stack social networking platform designed for real-tim
 ### Frontend
 - **Framework:** React 19 + Vite
 - **Styling:** Tailwind CSS 4 (with modern utility-first approach)
+- **Calling / Streaming:** Stream Video SDK (`@stream-io/video-react-sdk`)
 - **State Management:** Redux Toolkit (for global UI & user state)
 - **Data Fetching:** TanStack Query (React Query) for optimized server state management
 - **Routing:** React Router 7
@@ -19,6 +20,7 @@ Ping-up is a modern, full-stack social networking platform designed for real-tim
 - **Runtime:** Node.js (ES Modules)
 - **Framework:** Express 5
 - **Database:** MongoDB with Mongoose ODM
+- **Calling Server SDK:** Stream Node SDK (`@stream-io/node-sdk`)
 - **Caching & Rate Limiting:** Redis
 - **Background Jobs:** Inngest (Serverless-style event delivery)
 - **Media Management:** ImageKit.io (Cloud storage & real-time transformations)
@@ -29,6 +31,7 @@ Ping-up is a modern, full-stack social networking platform designed for real-tim
 ## ✨ Key Features
 
 - **🌓 Dynamic Theme:** Seamless support for Dark and Light modes with a premium aesthetic.
+- **📞 Audio & Video Calls:** Seamless real-time video/audio streaming with a global overlay notification banner and incoming call interface, letting users navigate the website uninterrupted during active sessions.
 - **💬 Real-time Messaging:** Integrated chat system with presence indicators and instant message delivery.
 - **📱 Responsive Feed:** A dynamic social feed supporting text posts, multi-image galleries, and interactive elements.
 - **🖼️ Stories:** transient 24-hour media sharing powered by background workers that automatically handle story expiration.
@@ -47,11 +50,12 @@ Ping-up/
 │       ├── api/           # Axios instance & API services
 │       ├── app/           # Redux store & global providers
 │       ├── components/    # Reusable UI components & modals
+│       ├── context/       # Global contexts (e.g., CallContext for audio/video calling)
 │       ├── features/      # Redux slices & feature-specific logic
 │       ├── pages/         # Route-level screen components
 │       └── assets/        # Stylesheets & static images
 ├── server/                # Express backend
-│   ├── configs/           # Redis, ImageKit, Multer, & DB configurations
+│   ├── configs/           # Redis, ImageKit, Multer, Stream, & DB configurations
 │   ├── controllers/       # Business logic for Users, Posts, Stories, etc.
 │   ├── inngest/           # Event-driven functions (e.g., auto-delete stories)
 │   ├── middlewares/       # Auth guards, Rate limiters, & Error handlers
@@ -67,6 +71,7 @@ Ping-up/
 - **Redis:** Local instance or Upstash/RedisCloud
 - **Clerk:** Active account for Auth keys
 - **ImageKit:** Account for media storage
+- **Stream.io:** Account for video/audio calling credentials
 
 ## 🔑 Environment Variables
 
@@ -86,6 +91,8 @@ SMTP_USER=your_smtp_user
 SMTP_PASS=your_smtp_password
 SENDER_EMAIL=your_verified_sender_email
 FRONTEND_URL=http://localhost:5173
+STREAM_API_KEY=your_stream_api_key
+STREAM_SECRET=your_stream_secret
 ```
 
 ### `Client/.env`
