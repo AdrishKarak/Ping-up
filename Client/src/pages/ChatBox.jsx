@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { ArrowLeft, ImagePlus, Send, X, MoreVertical, Phone, Video } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@clerk/react';
@@ -8,44 +8,7 @@ import Loading from '../components/Loading';
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
-import {
-    CallControls,
-    SpeakerLayout,
-    StreamCall,
-    StreamVideo,
-    StreamVideoClient
-} from '@stream-io/video-react-sdk';
-import '@stream-io/video-react-sdk/dist/css/styles.css';
-
-const ActiveCall = ({ client, call, onLeave }) => (
-    <StreamVideo client={client}>
-        <StreamCall call={call}>
-            <div className="fixed inset-0 z-50 bg-slate-950 text-white flex flex-col">
-                <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-white/10">
-                    <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate">Ping-up call</p>
-                        <p className="text-xs text-slate-400">Encrypted by Stream</p>
-                    </div>
-                    <button
-                        onClick={onLeave}
-                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/15 transition-colors"
-                        aria-label="Close call"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                </div>
-
-                <div className="flex-1 min-h-0">
-                    <SpeakerLayout />
-                </div>
-
-                <div className="px-4 py-4 border-t border-white/10 flex justify-center">
-                    <CallControls onLeave={onLeave} />
-                </div>
-            </div>
-        </StreamCall>
-    </StreamVideo>
-);
+import { useCall } from '../context/CallContext';
 
 const ChatBox = () => {
     const { userid } = useParams();
@@ -56,10 +19,7 @@ const ChatBox = () => {
     const [image, setImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [callClient, setCallClient] = useState(null);
-    const [activeCall, setActiveCall] = useState(null);
-    const [callLoading, setCallLoading] = useState(false);
-    const [incomingCall, setIncomingCall] = useState(null);
+    const { startCall, callLoading, activeCall } = useCall();
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const navigate = useNavigate();
@@ -121,21 +81,6 @@ const ChatBox = () => {
 
         return () => window.removeEventListener('new-message', handleNewMessage);
     }, [currentUser?._id, userid]);
-
-    useEffect(() => {
-        const handleIncomingCall = (event) => {
-            const data = event.detail;
-            const fromUserId = typeof data.from_user_id === "object" ? data.from_user_id._id : data.from_user_id;
-
-            if (fromUserId === userid) {
-                setIncomingCall(data);
-            }
-        };
-
-        window.addEventListener('incoming-call', handleIncomingCall);
-
-        return () => window.removeEventListener('incoming-call', handleIncomingCall);
-    }, [userid]);
 
     const sendMessage = async () => {
         if (!text.trim() && !image) {
@@ -215,92 +160,6 @@ const ChatBox = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    const leaveCall = useCallback(async () => {
-        const callToLeave = activeCall;
-        const clientToDisconnect = callClient;
-
-        setActiveCall(null);
-        setCallClient(null);
-        setCallLoading(false);
-
-        try {
-            await callToLeave?.leave();
-        } catch (error) {
-            console.warn("Failed to leave Stream call", error);
-        }
-
-        try {
-            await clientToDisconnect?.disconnectUser();
-        } catch (error) {
-            console.warn("Failed to disconnect Stream client", error);
-        }
-    }, [activeCall, callClient]);
-
-    useEffect(() => {
-        return () => {
-            activeCall?.leave().catch((error) => console.warn("Failed to leave Stream call", error));
-            callClient?.disconnectUser().catch((error) => console.warn("Failed to disconnect Stream client", error));
-        };
-    }, [activeCall, callClient]);
-
-    const startCall = async (callKind, options = {}) => {
-        if (callLoading || activeCall || !currentUser?._id || !userid) return;
-
-        setCallLoading(true);
-        let streamClient;
-        let call;
-
-        try {
-            const token = await getToken();
-            const { data } = await api.post('/api/message/call-token', { to_user_id: userid }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (!data.success) {
-                throw new Error(data.message);
-            }
-
-            streamClient = new StreamVideoClient({
-                apiKey: data.apiKey,
-                user: data.user,
-                token: data.token
-            });
-            call = streamClient.call(data.callType, data.callId);
-
-            await call.join({
-                create: true,
-                ring: options.sendInvite !== false,
-                notify: options.sendInvite !== false,
-                video: callKind === 'video',
-                data: {
-                    members: [
-                        { user_id: currentUser._id },
-                        { user_id: userid }
-                    ],
-                    created_by_id: currentUser._id
-                }
-            });
-
-            setCallClient(streamClient);
-            setActiveCall(call);
-            setIncomingCall(null);
-
-            if (options.sendInvite !== false) {
-                api.post('/api/message/call-invite', { to_user_id: userid, call_kind: callKind }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }).catch((error) => {
-                    console.warn("Failed to send call invite", error);
-                });
-            }
-        } catch (error) {
-            call?.leave().catch(() => {});
-            streamClient?.disconnectUser().catch(() => {});
-            toast.error(error.response?.data?.message || error.message || "Failed to start call");
-        } finally {
-            setCallLoading(false);
-        }
-    };
-
     const formatTime = (dateStr) => {
         const date = new Date(dateStr);
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -377,82 +236,28 @@ const ChatBox = () => {
                     </p>
                 </div>
 
-                <div className="flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                     <button
-                        onClick={() => startCall('audio')}
+                        onClick={() => startCall('audio', {}, userid)}
                         disabled={callLoading || !!activeCall}
                         title="Start audio call"
-                        className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                        className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-white text-slate-500 hover:text-purple-600 hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 border border-slate-100 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:text-purple-400"
                     >
-                        <Phone className="w-[18px] h-[18px]" />
+                        <Phone className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                     </button>
                     <button
-                        onClick={() => startCall('video')}
+                        onClick={() => startCall('video', {}, userid)}
                         disabled={callLoading || !!activeCall}
                         title="Start video call"
-                        className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                        className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-white text-slate-500 hover:text-purple-600 hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 border border-slate-100 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:text-purple-400"
                     >
-                        <Video className="w-[18px] h-[18px]" />
+                        <Video className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                     </button>
-                    <button className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-800 dark:hover:text-slate-200">
-                        <MoreVertical className="w-[18px] h-[18px]" />
+                    <button className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-white text-slate-500 hover:text-purple-600 hover:shadow-md transition-all active:scale-95 shrink-0 border border-slate-100 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:text-purple-400">
+                        <MoreVertical className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                     </button>
                 </div>
             </div>
-
-            <AnimatePresence>
-                {incomingCall && !activeCall && !callLoading && (
-                    <Motion.div
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        className="absolute top-20 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-30 rounded-2xl bg-white border border-slate-200 shadow-xl px-4 py-3 flex items-center gap-3 dark:bg-slate-900 dark:border-slate-800"
-                    >
-                        <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 dark:bg-purple-500/15 dark:text-purple-300">
-                            {incomingCall.call_kind === 'video' ? <Video className="w-5 h-5" /> : <Phone className="w-5 h-5" />}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold text-slate-900 truncate dark:text-slate-100">
-                                Incoming {incomingCall.call_kind} call
-                            </p>
-                            <p className="text-xs text-slate-500 truncate dark:text-slate-400">
-                                {user.full_name}
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                            <button
-                                onClick={() => setIncomingCall(null)}
-                                className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                                aria-label="Decline call"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={() => startCall(incomingCall.call_kind, { sendInvite: false })}
-                                className="w-9 h-9 flex items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
-                                aria-label="Accept call"
-                            >
-                                {incomingCall.call_kind === 'video' ? <Video className="w-4 h-4" /> : <Phone className="w-4 h-4" />}
-                            </button>
-                        </div>
-                    </Motion.div>
-                )}
-
-                {callLoading && (
-                    <Motion.div
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        className="absolute top-20 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-full bg-slate-950/90 text-white text-xs font-semibold shadow-lg"
-                    >
-                        Connecting call...
-                    </Motion.div>
-                )}
-            </AnimatePresence>
-
-            {callClient && activeCall && (
-                <ActiveCall client={callClient} call={activeCall} onLeave={leaveCall} />
-            )}
 
             {/* ── Messages Area ── */}
             <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth px-4 sm:px-6 py-6 space-y-8 relative z-10">
