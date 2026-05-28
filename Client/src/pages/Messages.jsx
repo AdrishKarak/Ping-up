@@ -450,7 +450,6 @@ const Messages = () => {
                                                     key={user._id}
                                                     user={user}
                                                     index={i}
-                                                    currentUser={currentUser}
                                                     isUnread
                                                     getPreview={getPreview}
                                                     formatTime={formatTime}
@@ -472,7 +471,6 @@ const Messages = () => {
                                                     key={user._id}
                                                     user={user}
                                                     index={i + unread.length}
-                                                    currentUser={currentUser}
                                                     getPreview={getPreview}
                                                     formatTime={formatTime}
                                                     navigate={navigate}
@@ -490,7 +488,7 @@ const Messages = () => {
     );
 };
 
-const ConvoCard = ({ user, index, currentUser, isUnread, getPreview, formatTime, navigate }) => {
+const ConvoCard = ({ user, index, isUnread, getPreview, formatTime, navigate }) => {
     const preview = getPreview(user.lastMessage);
     const time = formatTime(user.lastMessage?.createdAt);
 

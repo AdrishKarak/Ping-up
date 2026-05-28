@@ -53,6 +53,10 @@ const App = () => {
         eventSource.onmessage = (event) => {
             const data = JSON.parse(event.data);
             if (data.type === "connected") return;
+            if (data.type === "call-invite") {
+                window.dispatchEvent(new CustomEvent('incoming-call', { detail: data }));
+                return;
+            }
 
             // Handle incoming message globally
             dispatch(setLatestMessage(data));

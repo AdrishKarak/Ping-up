@@ -4,6 +4,8 @@ import imagekit from '../configs/imagekit.js';
 import { toFile } from '@imagekit/nodejs';
 import { inngest } from '../inngest/index.js';
 import { pubClient, subClient } from '../configs/redis.js';
+import User from '../models/User.js';
+import { getStreamApiKey, getStreamClient } from '../configs/stream.js';
 
 //Create an empty object to store ss event Connections
 const connectedClients = {};
@@ -193,6 +195,96 @@ export const getUserRecentMessages = async (req, res) => {
         });
 
         return res.status(200).json({ success: true, messages: conversations });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+export const getCallToken = async (req, res) => {
+    try {
+        const { userId } = await req.auth();
+        const { to_user_id } = req.body;
+
+        if (!to_user_id) {
+            return res.status(400).json({ success: false, message: "Receiver is required" });
+        }
+
+        if (to_user_id === userId) {
+            return res.status(400).json({ success: false, message: "Cannot start a call with yourself" });
+        }
+
+        const [currentUser, receiver] = await Promise.all([
+            User.findById(userId).select('full_name username profile_picture'),
+            User.findById(to_user_id).select('_id')
+        ]);
+
+        if (!currentUser || !receiver) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        const callId = `one-to-one-${[userId, to_user_id].sort().join('-')}`;
+        const streamClient = getStreamClient();
+        const token = streamClient.generateUserToken({
+            user_id: userId,
+            validity_in_seconds: 60 * 60
+        });
+
+        return res.status(200).json({
+            success: true,
+            apiKey: getStreamApiKey(),
+            token,
+            callId,
+            callType: 'default',
+            user: {
+                id: currentUser._id,
+                name: currentUser.full_name || currentUser.username,
+                image: currentUser.profile_picture || undefined
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+export const sendCallInvite = async (req, res) => {
+    try {
+        const { userId } = await req.auth();
+        const { to_user_id, call_kind } = req.body;
+
+        if (!to_user_id) {
+            return res.status(400).json({ success: false, message: "Receiver is required" });
+        }
+
+        if (!['audio', 'video'].includes(call_kind)) {
+            return res.status(400).json({ success: false, message: "Invalid call type" });
+        }
+
+        const currentUser = await User.findById(userId).select('full_name username profile_picture');
+        if (!currentUser) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        const callId = `one-to-one-${[userId, to_user_id].sort().join('-')}`;
+        const invite = {
+            type: 'call-invite',
+            from_user_id: currentUser,
+            to_user_id,
+            callId,
+            callType: 'default',
+            call_kind,
+            createdAt: new Date().toISOString()
+        };
+
+        if (pubClient.isReady) {
+            await pubClient.publish('MESSAGES', JSON.stringify({
+                to_user_id,
+                messageWithUserData: invite
+            }));
+        } else if (connectedClients[to_user_id]) {
+            connectedClients[to_user_id].write(`data: ${JSON.stringify(invite)}\n\n`);
+        }
+
+        return res.status(200).json({ success: true, invite });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
