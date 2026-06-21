@@ -6,6 +6,7 @@ import { useAuth } from '@clerk/react';
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import SEO from '../components/SEO';
 
 const CreatePost = () => {
     const navigate = useNavigate();
@@ -63,6 +64,7 @@ const CreatePost = () => {
 
     return (
         <>
+            <SEO title="Create Post" description="Share your thoughts, photos, and moments with your community on PingUp." />
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 

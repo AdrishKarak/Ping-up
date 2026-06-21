@@ -8,6 +8,7 @@ import { Heart, ImageIcon, MessageSquareText } from 'lucide-react';
 import ProfileModal from '../components/ProfileModal';
 import { useAuth } from '@clerk/react';
 import { useSelector } from 'react-redux';
+import SEO from '../components/SEO';
 
 const TABS = [
     { key: "posts", label: "Posts" },
@@ -147,6 +148,7 @@ const Profile = () => {
 
     return user ? (
         <div className="relative h-full overflow-y-auto no-scrollbar bg-gray-50/80 py-4 sm:py-6 md:py-8 px-3 sm:px-6 dark:bg-slate-950">
+            <SEO title={user?.full_name || 'Profile'} description={`View ${user?.full_name || 'a user'}'s profile, posts, and activity on PingUp.`} />
             <div className="max-w-2xl mx-auto">
                 {/* Profile Card */}
                 <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden border border-gray-100/60 dark:bg-slate-900 dark:border-slate-800 dark:shadow-none">

@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { useCall } from '../context/CallContext';
+import SEO from '../components/SEO';
 
 const ChatBox = () => {
     const { userid } = useParams();
@@ -198,6 +199,7 @@ const ChatBox = () => {
 
     return (
         <div className="flex-1 min-h-0 h-full w-full flex flex-col relative overflow-hidden bg-slate-50/50 dark:bg-[#020617]">
+            <SEO title={userData?.full_name ? `Chat with ${userData.full_name}` : 'Messages'} description={`Chat with your connections on PingUp.`} />
             {/* ── Decorative Background ── */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/10 blur-[120px] dark:bg-purple-500/5" />

@@ -9,6 +9,7 @@ import api from '../api/axios';
 import { PostSkeleton } from '../components/Skeletons';
 import { AnimatePresence } from 'framer-motion';
 import { useInfiniteQuery } from '@tanstack/react-query';
+import SEO from '../components/SEO';
 
 const Feed = () => {
     const { getToken } = useAuth();
@@ -68,6 +69,8 @@ const Feed = () => {
 
     return (
         <div className='h-full overflow-y-auto overflow-x-hidden no-scrollbar py-4 sm:py-8 lg:py-10 px-0 sm:px-6 md:px-8 lg:px-12 xl:px-4 flex items-start justify-center gap-6 lg:gap-10 xl:gap-20 2xl:gap-32'>
+            <SEO title="Feed" description="Browse the latest posts and updates from your connections on PingUp." />
+
 
             {/* Center column: stories and posts */}
             <div className='w-full max-w-full sm:max-w-[600px] md:max-w-[650px] lg:max-w-[720px] flex flex-col shrink-0 min-w-0'>

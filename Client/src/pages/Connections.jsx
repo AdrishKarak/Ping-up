@@ -5,6 +5,7 @@ import { useAuth } from '@clerk/react';
 import api from '../api/axios';
 import Loading from '../components/Loading';
 import toast from 'react-hot-toast';
+import SEO from '../components/SEO';
 
 const Connections = () => {
     const navigate = useNavigate();
@@ -78,6 +79,7 @@ const Connections = () => {
 
     return (
         <>
+            <SEO title="Connections" description="Manage your followers, following, and connection requests on PingUp." />
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 

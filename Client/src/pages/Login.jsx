@@ -2,6 +2,7 @@ import { assets } from '../assets/assets';
 import { Star } from 'lucide-react';
 import { SignIn } from '@clerk/react';
 import { useEffect, useRef } from 'react';
+import SEO from '../components/SEO';
 
 const FloatingOrb = ({ style, delay = 0 }) => (
     <div
@@ -61,6 +62,7 @@ const Login = () => {
 
     return (
         <>
+            <SEO title="Login" description="Sign in to PingUp and connect with your community." />
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 

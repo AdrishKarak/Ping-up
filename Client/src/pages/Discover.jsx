@@ -6,6 +6,7 @@ import api from '../api/axios';
 import toast from 'react-hot-toast';
 import { UserCardSkeleton } from '../components/Skeletons';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
+import SEO from '../components/SEO';
 
 const Discover = () => {
     const [input, setInput] = useState("");
@@ -47,6 +48,7 @@ const Discover = () => {
 
     return (
         <div className="h-full overflow-y-auto no-scrollbar w-full flex justify-center py-6 sm:py-10 px-4 sm:px-8">
+            <SEO title="Discover" description="Discover new people and grow your network on PingUp." />
             <div className="w-full max-w-[950px] flex flex-col">
                 <div className="mb-6 md:mb-8 pl-1">
                     <h1 className="text-2xl md:text-[28px] font-bold text-slate-900 mb-1.5 tracking-tight dark:text-slate-100">Discover People</h1>

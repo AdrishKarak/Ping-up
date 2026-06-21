@@ -7,6 +7,7 @@ import api from '../api/axios';
 import Loading from '../components/Loading';
 import toast from 'react-hot-toast';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
+import SEO from '../components/SEO';
 
 const Messages = () => {
     const navigate = useNavigate();
@@ -84,6 +85,7 @@ const Messages = () => {
 
     return (
         <>
+            <SEO title="Messages" description="Chat with your connections on PingUp." />
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap');
 
