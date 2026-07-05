@@ -105,3 +105,47 @@ This document records the full suite of backend, frontend, database, and system-
 
 ### 5. Scrollbar Optimization
 * Created a global `.no-scrollbar` class in `index.css` to hide scrollbars globally on scrollable divs across all browsers while keeping scrolling functionality intact, preventing ugly browser UI defaults.
+
+ ### 📊 Estimated Limits (Free Tier)                                                                                         
+                                                                                                                              
+   Metric                       │ Free Tier Capacity          │ Main Bottleneck
+  ──────────────────────────────┼─────────────────────────────┼───────────────────────────────────────────────────────────────
+   Total Registered Users       │ ~10,000 users               │ Clerk Free Tier MAU limit (10k monthly active users)
+   Max Concurrent Online Users  │ ~30 to 100 users            │ MongoDB (100 max connections) & Redis (30-50 max connections)
+   Daily API Request Volume     │ ~3,000 to 5,000 calls / day │ Upstash Redis Free Tier command limit (10,000 commands/day)
+   Database Storage Limit       │ ~50,000 combined records    │ MongoDB Atlas M0 storage limit (512 MB)
+  ──────                                                                                                                      
+  ### ⚠️ Main Bottlenecks Explained                                                                                           
+                                                                                                                              
+  #### 1. Redis Free Tier (The tightest bottleneck)                                                                           
+                                                                                                                              
+  • Upstash Redis Free Tier has a hard limit of 10,000 commands per day.                                                      
+  • Since we use Redis for Rate Limiting (1 command per API hit) and Caching/Presence (1–2 commands per profile/online check),
+  a single active user browsing for a few minutes can easily trigger 50–100 API calls.                                        
+  • Result: With Upstash, your daily cap will be reached at around 50–100 active daily users.                                 
+  • Note: If you use Redis Cloud Free Tier instead, there is no daily command cap, but you are limited to 30 concurrent       
+  connections and 30MB RAM.                                                                                                   
+                                                                                                                              
+  #### 2. MongoDB Atlas Free Tier (M0)                                                                                        
+                                                                                                                              
+  • 100 Max Connections: MongoDB Atlas M0 caps database connections at 100. Since Mongoose maintains a connection pool        
+  (usually 5–10 connections per server node), this is generally fine, but if you have multiple server instances running, you  
+  will hit this limit.                                                                                                        
+  • 512MB RAM & Storage: While 512MB is plenty for text-based data (a user profile or message is only ~1KB, meaning you can   
+  easily store 100,000+ text records), Atlas throttles CPU and IOPS if database operations spike.                             
+  
+  #### 3. Real-Time SSE (Server-Sent Events)
+  
+  • Because SSE keeps a persistent HTTP connection open for every online user, a free-tier hosting node (e.g. Render Free Tier
+  with 512MB RAM and shared CPU) will start lagging or dropping connections when more than 150–200 users are connected        
+  simultaneously due to container memory limits and file descriptor caps.
+  ──────
+  ### 📈 How to scale this to 100,000+ users (Production Upgrades)
+  
+  When you are ready to launch to a larger audience, you can lift these limits step-by-step:
+  
+  1. Move Redis to a Paid/Self-Hosted Tier: Upgrading Upstash to their pay-as-you-go tier (or spinning up a Redis instance on 
+  a $5/month VPS) completely removes the daily command limits.
+  2. Upgrade MongoDB Atlas to M10+: Moving to a dedicated MongoDB tier removes connection throttling and provides auto-scaling
+  storage.
+  3. Run PM2 Cluster Mode: Scale your Node.js server horizontally to utilize all CPU cores on your hosting provider.          
