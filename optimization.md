@@ -49,6 +49,39 @@ This document records the full suite of backend, frontend, database, and system-
 * **SSE Event Invites:** Incoming call invitations are routed instantly through Server-Sent Events (SSE) connections instead of heavy HTTP polling, saving server CPU cycles and database load.
 * **On-Demand Token Generation:** Video/audio call tokens (via Stream SDK) are generated dynamically on-demand only when a call starts, preventing unnecessary token calculation and token leakage.
 
+### 5. Redis Pub/Sub for Real-Time Messages
+* **Multi-Instance Brokerage:** Solves the horizontal scaling problem by utilizing Redis Pub/Sub on the `'MESSAGES'` channel.
+* **Real-Time Handoff:** When a message is sent, the server saves it to MongoDB and publishes it to Redis. Every server node subscribes to the channel and routes the incoming broadcast to the recipient's open Server-Sent Events (SSE) connection. This ensures instant delivery even if the sender and receiver are connected to different load-balanced server instances.
+      
+      ### 5.1. The Real-Time Pipeline Workflow:                                                                                     
+                                                                                                                              
+  1. DB Persistence: When a user sends a message, it is first saved to MongoDB via  Message.create  in messageController.js.       
+  2. Publishing to Redis: If Redis is connected, the server publishes the message payload to a Redis channel called           
+  'MESSAGES' :                                                                                                                
+    await pubClient.publish('MESSAGES', JSON.stringify({ to_user_id, messageWithUserData }));                                 
+                                                                                                                              
+  3. Subscribing & SSE Delivery:                                                                                              
+      • During server startup, every backend node subscribes to the  'MESSAGES'  Redis channel:                               
+        await subClient.subscribe('MESSAGES', (message) => { ... });                                                          
+                                                                                                                              
+      • When Redis broadcasts a message, the server instance checks if the recipient is connected to its local real-time      
+      Server-Sent Events (SSE) connections list ( connectedClients ).                                                         
+      • If yes, the server writes the message directly to the client's HTTP response stream.                                  
+  4. Single-Instance Fallback: If Redis is disconnected or unavailable, the code contains a fallback that directly routes the 
+  message to the recipient if they happen to be connected to the exact same server instance.                                  
+  ──────                                                                                                                      
+  ### 5.2. Why is this highly optimized?                                                                                        
+                                                                                                                              
+  • Horizontal Scaling (Cross-Instance Coordination): On hosting platforms (like Render or AWS) where you might spin up       
+  multiple server containers (nodes) behind a load balancer:                                                                  
+      • Sender might be connected to Server Instance A.                                                                       
+      • Receiver might be connected to Server Instance B.                                                                     
+      • Without Redis, Server A would look at its local connections, not find the recipient, and the receiver would never get 
+      the real-time ping.                                                                                                     
+      • With Redis, Instance A publishes the message to Redis, Redis broadcasts it to Instance B (and all other instances),   
+      and Instance B instantly pushes it down the receiver's active SSE stream.                                               
+  • Low Latency: Redis runs entirely in-memory, making the pub/sub handoff take less than a millisecond.
+
 ---
 
 ## 🖥️ Client-Side & UI Optimizations
