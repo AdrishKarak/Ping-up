@@ -21,6 +21,7 @@ const Discover = lazy(() => import("./pages/Discover.jsx"));
 const Profile = lazy(() => import("./pages/Profile.jsx"));
 const CreatePost = lazy(() => import("./pages/CreatePost.jsx"));
 const Layout = lazy(() => import("./pages/Layout.jsx"));
+const PostDetail = lazy(() => import("./pages/PostDetail.jsx"));
 
 const App = () => {
     const { user, isLoaded } = useUser();
@@ -91,6 +92,7 @@ const App = () => {
                         <Route path='profile' element={<Profile />} />
                         <Route path='profile/:profileId' element={<Profile />} />
                         <Route path='create-post' element={<CreatePost />} />
+                        <Route path='post/:postId' element={<PostDetail />} />
                     </Route>
                 </Routes>
             </Suspense>

@@ -1,5 +1,7 @@
-import { BadgeCheck, Calendar, MapPin, SquarePen, Moon, Sun } from 'lucide-react';
+import { BadgeCheck, Calendar, MapPin, SquarePen, Moon, Sun, Maximize2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import ImageModal from './ImageModal';
 
 const getRelativeTime = (dateString) => {
     const createdAt = new Date(dateString);
@@ -16,6 +18,7 @@ const getRelativeTime = (dateString) => {
 
 const UserProfileinfo = ({ user, profileId, posts, setShowEditProfile }) => {
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const [showAvatarModal, setShowAvatarModal] = useState(false);
 
     useEffect(() => {
         setIsDarkMode(document.documentElement.classList.contains('dark'));
@@ -40,12 +43,19 @@ const UserProfileinfo = ({ user, profileId, posts, setShowEditProfile }) => {
                 <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div className="flex flex-col items-center text-center md:flex-row md:items-end md:text-left">
                         {/* Profile picture */}
-                        <div className="h-28 w-28 -mt-14 overflow-hidden rounded-full border-[3.5px] border-white bg-white shadow-lg ring-2 ring-purple-100 sm:h-32 sm:w-32 sm:-mt-16 md:-mt-20">
+                        <div
+                            onClick={() => setShowAvatarModal(true)}
+                            className="group/avatar relative h-28 w-28 -mt-14 overflow-hidden rounded-full border-[3.5px] border-white bg-white shadow-lg ring-2 ring-purple-100 sm:h-32 sm:w-32 sm:-mt-16 md:-mt-20 cursor-pointer"
+                        >
                             <img
                                 src={user.profile_picture}
                                 alt={user.full_name}
-                                className="h-full w-full object-cover"
+                                className="h-full w-full object-cover transition-all duration-300 group-hover/avatar:scale-110 group-hover/avatar:brightness-90"
                             />
+                            {/* Hover overlay with indicator */}
+                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                <Maximize2 className="h-6 w-6 text-white drop-shadow-md transform scale-90 group-hover/avatar:scale-100 transition-transform duration-300" />
+                            </div>
                         </div>
                         {/* Name & username */}
                         <div className="mt-3 md:ml-5 md:mt-0">
@@ -120,6 +130,16 @@ const UserProfileinfo = ({ user, profileId, posts, setShowEditProfile }) => {
                     <StatItem value={user.following?.length ?? 0} label="Following" />
                 </div>
             </div>
+
+            <AnimatePresence>
+                {showAvatarModal && (
+                    <ImageModal
+                        images={[user.profile_picture]}
+                        currentIndex={0}
+                        onClose={() => setShowAvatarModal(false)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

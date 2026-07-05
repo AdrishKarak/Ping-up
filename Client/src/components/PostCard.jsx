@@ -125,7 +125,7 @@ const PostCard = ({ post, onDelete, onLikeToggle }) => {
     };
 
     const handleShare = () => {
-        const postUrl = `${window.location.origin}/?postId=${post._id}`;
+        const postUrl = `${window.location.origin}/post/${post._id}`;
         navigator.clipboard.writeText(postUrl)
             .then(() => toast.success("Post link copied to clipboard!"))
             .catch(() => toast.error("Failed to copy link"));

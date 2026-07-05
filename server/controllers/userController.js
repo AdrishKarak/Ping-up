@@ -149,21 +149,35 @@ export const updateUserData = async (req, res) => {
 export const discoverUsers = async (req, res) => {
     try {
         const { userId } = await req.auth();
-        const { input } = req.body;
+        const { input = "", page = 1, limit = 9 } = req.body;
 
-        const allUsers = await User.find(
-            {
-                $or: [
-                    { username: new RegExp(input, 'i') },
-                    { full_name: new RegExp(input, 'i') },
-                    { email: new RegExp(input, 'i') },
-                    { location: new RegExp(input, 'i') }
-                ]
-            }
-        )
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        const pageSize = parseInt(limit);
 
-        const filteredUsers = allUsers.filter(user => user._id.toString() !== userId);
-        return res.status(200).json({ success: true, users: filteredUsers });
+        const query = { _id: { $ne: userId } };
+        const trimmedInput = input.trim();
+
+        if (trimmedInput !== "") {
+            const regex = new RegExp(trimmedInput, 'i');
+            query.$or = [
+                { username: regex },
+                { full_name: regex },
+                { email: regex },
+                { location: regex }
+            ];
+        }
+
+        const total = await User.countDocuments(query);
+        const users = await User.find(query)
+            .select('_id profile_picture full_name username bio location followers following connections')
+            .skip(skip)
+            .limit(pageSize);
+
+        return res.status(200).json({
+            success: true,
+            users,
+            hasMore: total > skip + users.length
+        });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }

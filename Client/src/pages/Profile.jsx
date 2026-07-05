@@ -25,6 +25,11 @@ const Profile = () => {
     const [likedPosts, setLikedPosts] = useState([]);
     const [showEditProfile, setShowEditProfile] = useState(false);
     const [activeTab, setActiveTab] = useState("posts");
+    const [visibleCount, setVisibleCount] = useState(9);
+
+    useEffect(() => {
+        setVisibleCount(9);
+    }, [activeTab]);
 
     const fetchUser = useCallback(async (id) => {
         try {
@@ -82,12 +87,26 @@ const Profile = () => {
 
     const renderTabContent = () => {
         switch (activeTab) {
-            case "posts":
+            case "posts": {
+                const visiblePosts = userPosts.slice(0, visibleCount);
                 return userPosts.length > 0 ? (
                     <div className="space-y-4 sm:space-y-5">
-                        {userPosts.map((post) => (
+                        {visiblePosts.map((post) => (
                             <PostCard key={post._id} post={post} onDelete={handlePostDelete} onLikeToggle={handleLikeToggle} />
                         ))}
+                        {userPosts.length > visibleCount && (
+                            <div className="flex justify-center mt-6">
+                                <button
+                                    onClick={() => setVisibleCount(prev => prev + 9)}
+                                    className="relative group px-8 py-3.5 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-2xl shadow-[0_4px_15px_rgba(124,58,237,0.25)] hover:shadow-[0_6px_20px_rgba(124,58,237,0.35)] transition-all duration-300 active:scale-98 cursor-pointer flex items-center justify-center gap-2.5"
+                                >
+                                    <span>Load More Posts</span>
+                                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded-md font-medium">
+                                        +{Math.min(9, userPosts.length - visibleCount)}
+                                    </span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <EmptyState
@@ -96,27 +115,44 @@ const Profile = () => {
                         description="When you create posts, they'll show up here."
                     />
                 );
+            }
 
-            case "media":
+            case "media": {
+                const visibleImages = allImages.slice(0, visibleCount);
                 return allImages.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                        {allImages.map((img, idx) => (
-                            <div
-                                key={`${img.postId}-${img.index}`}
-                                className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 cursor-pointer border border-gray-100 dark:bg-slate-800 dark:border-slate-700"
-                            >
-                                <img
-                                    src={img.url}
-                                    alt={`Media ${idx + 1}`}
-                                    loading="lazy"
-                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                />
-                                {/* Hover overlay */}
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                                    <ImageIcon className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-lg" />
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                            {visibleImages.map((img, idx) => (
+                                <div
+                                    key={`${img.postId}-${img.index}`}
+                                    className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 cursor-pointer border border-gray-100 dark:bg-slate-800 dark:border-slate-700"
+                                >
+                                    <img
+                                        src={img.url}
+                                        alt={`Media ${idx + 1}`}
+                                        loading="lazy"
+                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    />
+                                    {/* Hover overlay */}
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                                        <ImageIcon className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-lg" />
+                                    </div>
                                 </div>
+                            ))}
+                        </div>
+                        {allImages.length > visibleCount && (
+                            <div className="flex justify-center mt-6">
+                                <button
+                                    onClick={() => setVisibleCount(prev => prev + 9)}
+                                    className="relative group px-8 py-3.5 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-2xl shadow-[0_4px_15px_rgba(124,58,237,0.25)] hover:shadow-[0_6px_20px_rgba(124,58,237,0.35)] transition-all duration-300 active:scale-98 cursor-pointer flex items-center justify-center gap-2.5"
+                                >
+                                    <span>Load More Media</span>
+                                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded-md font-medium">
+                                        +{Math.min(9, allImages.length - visibleCount)}
+                                    </span>
+                                </button>
                             </div>
-                        ))}
+                        )}
                     </div>
                 ) : (
                     <EmptyState
@@ -125,13 +161,28 @@ const Profile = () => {
                         description="Photos and images from posts will appear here."
                     />
                 );
+            }
 
-            case "likes":
+            case "likes": {
+                const visibleLikes = likedPosts.slice(0, visibleCount);
                 return likedPosts.length > 0 ? (
                     <div className="space-y-4 sm:space-y-5">
-                        {likedPosts.map((post) => (
+                        {visibleLikes.map((post) => (
                             <PostCard key={post._id} post={post} onDelete={handlePostDelete} onLikeToggle={handleLikeToggle} />
                         ))}
+                        {likedPosts.length > visibleCount && (
+                            <div className="flex justify-center mt-6">
+                                <button
+                                    onClick={() => setVisibleCount(prev => prev + 9)}
+                                    className="relative group px-8 py-3.5 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-2xl shadow-[0_4px_15px_rgba(124,58,237,0.25)] hover:shadow-[0_6px_20px_rgba(124,58,237,0.35)] transition-all duration-300 active:scale-98 cursor-pointer flex items-center justify-center gap-2.5"
+                                >
+                                    <span>Load More Liked Posts</span>
+                                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded-md font-medium">
+                                        +{Math.min(9, likedPosts.length - visibleCount)}
+                                    </span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <EmptyState
@@ -140,6 +191,7 @@ const Profile = () => {
                         description="Posts you like will show up here."
                     />
                 );
+            }
 
             default:
                 return null;

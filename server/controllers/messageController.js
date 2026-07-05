@@ -172,30 +172,45 @@ export const getMessages = async (req, res) => {
 export const getUserRecentMessages = async (req, res) => {
     try {
         const { userId } = await req.auth();
-        const messages = await Message.find({
-            $or: [
-                { from_user_id: userId },
-                { to_user_id: userId }
-            ]
-        }).populate('from_user_id to_user_id').sort({ createdAt: -1 });
 
-        const conversations = [];
-        const seenUsers = new Set();
-
-        messages.forEach((message) => {
-            const fromUserId = message.from_user_id?._id?.toString?.() || message.from_user_id;
-            const toUserId = message.to_user_id?._id?.toString?.() || message.to_user_id;
-            const otherUserId = fromUserId === userId ? toUserId : fromUserId;
-
-            if (!otherUserId || seenUsers.has(otherUserId)) {
-                return;
+        const conversations = await Message.aggregate([
+            {
+                $match: {
+                    $or: [
+                        { from_user_id: userId },
+                        { to_user_id: userId }
+                    ]
+                }
+            },
+            {
+                $sort: { createdAt: -1 }
+            },
+            {
+                $group: {
+                    _id: {
+                        $cond: [
+                            { $eq: ["$from_user_id", userId] },
+                            "$to_user_id",
+                            "$from_user_id"
+                        ]
+                    },
+                    lastMessage: { $first: "$$ROOT" }
+                }
+            },
+            {
+                $replaceRoot: { newRoot: "$lastMessage" }
+            },
+            {
+                $sort: { createdAt: -1 }
             }
+        ]);
 
-            seenUsers.add(otherUserId);
-            conversations.push(message);
-        });
+        const populated = await Message.populate(conversations, [
+            { path: 'from_user_id' },
+            { path: 'to_user_id' }
+        ]);
 
-        return res.status(200).json({ success: true, messages: conversations });
+        return res.status(200).json({ success: true, messages: populated });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }

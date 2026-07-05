@@ -14,6 +14,9 @@ const userSchema = new mongoose.Schema({
     connections: [{ type: String, ref: "User" }],
 }, { timestamps: true, minimize: false })
 
+userSchema.index({ full_name: 1 });
+userSchema.index({ location: 1 });
+
 const User = mongoose.model("User", userSchema);
 
 export default User;

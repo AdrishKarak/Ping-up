@@ -31,13 +31,14 @@ Ping-up is a modern, full-stack social networking platform designed for real-tim
 ## ✨ Key Features
 
 - **🌓 Dynamic Theme:** Seamless support for Dark and Light modes with a premium aesthetic.
-- **📞 Audio & Video Calls:** Seamless real-time video/audio streaming with a global overlay notification banner and incoming call interface, letting users navigate the website uninterrupted during active sessions.
+- **📞 Audio & Video Calls:** Real-time call capability powered by Stream Video SDK. Features a global, persistent call overlay notification, custom ringtone overlays, active status tracking, and secure on-demand token generation. Users can navigate the platform completely uninterrupted during active voice/video calling sessions.
 - **💬 Real-time Messaging:** Integrated chat system with presence indicators and instant message delivery.
 - **📱 Responsive Feed:** A dynamic social feed supporting text posts, multi-image galleries, and interactive elements.
-- **🖼️ Stories:** transient 24-hour media sharing powered by background workers that automatically handle story expiration.
-- **👥 Connections:** Comprehensive follow/unfollow system and connection requests with automated email notifications.
-- **❤️ Interactions:** Real-time-like likes and comments with immediate UI feedback and cross-tab synchronization.
-- **🔍 Discovery:** Robust user search and discovery features to find friends and colleagues.
+- **🖼️ Stories:** Transient 24-hour media sharing powered by background workers that automatically handle story expiration.
+- **👥 Connections & Paginated Lists:** Comprehensive connection requests, followers lists, profile tabs, and chat histories with client-side lazy-loading pagination to prevent DOM-node lag.
+- **🖼️ Profile Picture Zoom:** Click any user's main profile picture to maximize it in a beautiful, backdrop-blurred high-resolution modal.
+- **🔗 Clean Post Sharing:** Paste post URLs directly in the browser to view the specific post using clean `/post/:postId` routes.
+- **🔍 Optimized Discovery:** Debounced searching with a local query cache and minimum character limits (late querying) to minimize server load.
 - **🛡️ Secure & Scalable:** Redis-backed rate limiting to prevent API abuse and optimized caching for lightning-fast profile loads.
 
 ## 📁 Repository Structure
@@ -140,4 +141,8 @@ cd Client && npm run lint && npm run build
 
 ---
 *Developed with a focus on visual excellence and performance.*
+
+## ⚡ Performance Optimization
+
+For a complete record of backend query aggregations, Redis cache setups, MongoDB indexes, client-side memoization, late querying thresholds, and CSS optimizations, check the dedicated [optimization.md](file:///home/adrish/Desktop/Ping-up/optimization.md) file.
 

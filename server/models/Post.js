@@ -9,7 +9,9 @@ const postSchema = new mongoose.Schema({
     comments_count: { type: Number, default: 0 },
 }, { timestamps: true, minimize: false })
 
-const Post = mongoose.model('Post', postSchema)
-Post.schema.index({ user: 1, createdAt: -1 });
+postSchema.index({ user: 1, createdAt: -1 });
+postSchema.index({ createdAt: -1 });
+
+const Post = mongoose.model('Post', postSchema);
 
 export default Post;

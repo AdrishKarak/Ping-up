@@ -16,6 +16,11 @@ const Connections = () => {
     const [following, setFollowing] = useState([]);
     const [pendingConnections, setPendingConnections] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [visibleCount, setVisibleCount] = useState(9);
+
+    useEffect(() => {
+        setVisibleCount(9);
+    }, [currentTab]);
 
     const fetchConnections = useCallback(async () => {
         try {
@@ -343,7 +348,7 @@ const Connections = () => {
                                 <div className="cn-empty-icon"><UserCheck size={26} /></div>
                                 <p className="cn-empty-text">Nothing here yet.</p>
                             </div>
-                        ) : currentData.map((user) => (
+                        ) : currentData.slice(0, visibleCount).map((user) => (
                             <div key={user._id} className="cn-card">
                                 <div className="cn-card-top">
                                     <img src={user.profile_picture} alt={user.full_name} className="cn-card-avatar" />
@@ -382,6 +387,20 @@ const Connections = () => {
                             </div>
                         ))}
                     </div>
+
+                    {currentData.length > visibleCount && (
+                        <div className="flex justify-center mt-6">
+                            <button
+                                onClick={() => setVisibleCount(prev => prev + 9)}
+                                className="relative group px-8 py-3.5 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-2xl shadow-[0_4px_15px_rgba(124,58,237,0.25)] hover:shadow-[0_6px_20px_rgba(124,58,237,0.35)] transition-all duration-300 active:scale-98 cursor-pointer flex items-center justify-center gap-2.5"
+                            >
+                                <span>Load More Profiles</span>
+                                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-md font-medium">
+                                    +{Math.min(9, currentData.length - visibleCount)}
+                                </span>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </>

@@ -15,6 +15,7 @@ const Messages = () => {
     const [people, setPeople] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [visibleCount, setVisibleCount] = useState(9);
     const { getToken } = useAuth();
 
     useEffect(() => {
@@ -328,16 +329,7 @@ const Messages = () => {
                     align-items: center;
                     gap: 6px;
                     flex-shrink: 0;
-                    opacity: 0;
-                    transform: translateX(6px);
                     transition: all 0.18s ease;
-                }
-                .msg-card:hover .msg-actions {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-                @media (max-width: 500px) {
-                    .msg-actions { opacity: 1; transform: none; }
                 }
                 .action-btn {
                     width: 36px;
@@ -468,7 +460,7 @@ const Messages = () => {
                                     <p className="section-label">{unread.length > 0 ? 'All messages' : 'Messages'}</p>
                                     <div className="msg-list">
                                         <AnimatePresence>
-                                            {rest.map((user, i) => (
+                                            {rest.slice(0, visibleCount).map((user, i) => (
                                                 <ConvoCard
                                                     key={user._id}
                                                     user={user}
@@ -480,6 +472,19 @@ const Messages = () => {
                                             ))}
                                         </AnimatePresence>
                                     </div>
+                                    {rest.length > visibleCount && (
+                                        <div className="flex justify-center mt-6">
+                                            <button
+                                                onClick={() => setVisibleCount(prev => prev + 9)}
+                                                className="relative group px-8 py-3.5 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-2xl shadow-[0_4px_15px_rgba(124,58,237,0.25)] hover:shadow-[0_6px_20px_rgba(124,58,237,0.35)] transition-all duration-300 active:scale-98 cursor-pointer flex items-center justify-center gap-2.5"
+                                            >
+                                                <span>Load More Messages</span>
+                                                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-md font-medium">
+                                                    +{Math.min(9, rest.length - visibleCount)}
+                                                </span>
+                                            </button>
+                                        </div>
+                                    )}
                                 </>
                             )}
                         </>
