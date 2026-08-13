@@ -4,7 +4,6 @@ import User from "../models/User.js";
 import Post from "../models/Post.js";
 import Connection from "../models/Connection.js";
 import { inngest } from "../inngest/index.js";
-import fs from "fs";
 import { redisClient } from "../configs/redis.js";
 
 export const clearUserProfileCache = async (profileId) => {
@@ -91,11 +90,10 @@ export const updateUserData = async (req, res) => {
         const cover = req.files?.cover?.[0];
 
         if (profile) {
-            const buffer = fs.readFileSync(profile.path);
             const response = await imagekit.files.upload({
-                file: await toFile(buffer, profile.originalname),
+                file: await toFile(profile.buffer, profile.originalname),
                 fileName: profile.originalname,
-            })
+            });
 
             const url = imagekit.helper.buildSrc({
                 urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
@@ -107,18 +105,16 @@ export const updateUserData = async (req, res) => {
                         width: 512
                     }
                 ]
-            })
+            });
 
             updatedData.profile_picture = url;
-            fs.unlinkSync(profile.path);
         }
 
         if (cover) {
-            const buffer = fs.readFileSync(cover.path);
             const response = await imagekit.files.upload({
-                file: await toFile(buffer, cover.originalname),
+                file: await toFile(cover.buffer, cover.originalname),
                 fileName: cover.originalname,
-            })
+            });
 
             const url = imagekit.helper.buildSrc({
                 urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
@@ -130,10 +126,9 @@ export const updateUserData = async (req, res) => {
                         width: 1280
                     }
                 ]
-            })
+            });
 
             updatedData.cover_photo = url;
-            fs.unlinkSync(cover.path);
         }
 
         const user = await User.findByIdAndUpdate(userId, updatedData, { new: true });

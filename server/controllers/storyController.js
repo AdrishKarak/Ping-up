@@ -1,4 +1,3 @@
-import fs from 'fs';
 import Story from '../models/Story.js';
 import User from '../models/User.js';
 import { inngest } from '../inngest/index.js';
@@ -37,9 +36,8 @@ export const addStory = async (req, res) => {
 
         //Upload media to cloud
         if (media_type === 'image' || media_type === 'video') {
-            const buffer = fs.readFileSync(media.path);
             const response = await imagekit.files.upload({
-                file: await toFile(buffer, media.originalname),
+                file: await toFile(media.buffer, media.originalname),
                 fileName: media.originalname,
                 folder: "stories" // Use separate folder for stories
             })
@@ -60,10 +58,6 @@ export const addStory = async (req, res) => {
                 // For video, do not apply image transformations
                 media_url = response.url;
             }
-        }
-
-        if (media && media.path && fs.existsSync(media.path)) {
-            fs.unlinkSync(media.path);
         }
 
         //Create Story
@@ -88,10 +82,6 @@ export const addStory = async (req, res) => {
         return res.status(201).json({ success: true, message: "Story added successfully", story });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
-    } finally {
-        if (media && media.path && fs.existsSync(media.path)) {
-            fs.unlinkSync(media.path);
-        }
     }
 }
 

@@ -1,4 +1,3 @@
-import fs from 'fs';
 import crypto from 'crypto';
 import Message from '../models/Message.js';
 import imagekit from '../configs/imagekit.js';
@@ -78,9 +77,8 @@ export const sendMessage = async (req, res) => {
                 return res.status(400).json({ success: false, message: "Only image messages are supported" });
             }
 
-            const buffer = fs.readFileSync(media.path);
             const response = await imagekit.files.upload({
-                file: await toFile(buffer, media.originalname),
+                file: await toFile(media.buffer, media.originalname),
                 fileName: media.originalname,
                 folder: "messages"
             });
@@ -139,10 +137,6 @@ export const sendMessage = async (req, res) => {
             return res.status(500).json({ success: false, message: error.message });
         }
         console.error('Error after headers sent:', error.message);
-    } finally {
-        if (media && media.path && fs.existsSync(media.path)) {
-            fs.unlinkSync(media.path);
-        }
     }
 }
 

@@ -1,4 +1,3 @@
-import fs from "fs";
 import imagekit from "../configs/imagekit.js";
 import { toFile } from "@imagekit/nodejs";
 import Post from "../models/Post.js";
@@ -26,12 +25,6 @@ export const addPost = async (req, res) => {
         const images = req.files || [];
 
         if (images.length > 4) {
-            images.forEach((image) => {
-                if (fs.existsSync(image.path)) {
-                    fs.unlinkSync(image.path);
-                }
-            });
-
             return res.status(400).json({ success: false, message: "You can upload up to 4 images only" });
         }
 
@@ -40,32 +33,25 @@ export const addPost = async (req, res) => {
         if (images.length) {
             image_urls = await Promise.all(
                 images.map(async (image) => {
-                    try {
-                        const buffer = fs.readFileSync(image.path);
-                        const response = await imagekit.files.upload({
-                            file: await toFile(buffer, image.originalname),
-                            fileName: image.originalname,
-                            folder: "posts"
-                        })
+                    const response = await imagekit.files.upload({
+                        file: await toFile(image.buffer, image.originalname),
+                        fileName: image.originalname,
+                        folder: "posts"
+                    });
 
-                        return imagekit.helper.buildSrc({
-                            urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
-                            src: response.filePath,
-                            transformation: [
-                                {
-                                    quality: 80,
-                                    format: 'webp',
-                                    width: 1280
-                                }
-                            ]
-                        })
-                    } finally {
-                        if (fs.existsSync(image.path)) {
-                            fs.unlinkSync(image.path);
-                        }
-                    }
+                    return imagekit.helper.buildSrc({
+                        urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+                        src: response.filePath,
+                        transformation: [
+                            {
+                                quality: 80,
+                                format: 'webp',
+                                width: 1280
+                            }
+                        ]
+                    });
                 })
-            )
+            );
         }
 
         await Post.create({
