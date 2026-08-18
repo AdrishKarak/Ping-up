@@ -1,9 +1,9 @@
-import imagekit from "../configs/imagekit.js";
+import imagekit from "../../shared/configs/imagekit.js";
 import { toFile } from "@imagekit/nodejs";
-import Post from "../models/Post.js";
-import User from "../models/User.js";
-import { redisClient } from '../configs/redis.js';
-import { clearUserProfileCache } from "./userController.js";
+import Post from "./models/post.model.js";
+import User from "../user/models/user.model.js";
+import { redisClient } from '../../shared/configs/redis.js';
+import { clearUserProfileCache } from "../user/user.controller.js";
 
 const clearUserFeedCache = async () => {
     if (!redisClient.isReady) return;

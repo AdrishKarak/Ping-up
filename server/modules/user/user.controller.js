@@ -1,10 +1,10 @@
-import imagekit from "../configs/imagekit.js";
+import imagekit from "../../shared/configs/imagekit.js";
 import { toFile } from "@imagekit/nodejs";
-import User from "../models/User.js";
-import Post from "../models/Post.js";
-import Connection from "../models/Connection.js";
-import { inngest } from "../inngest/index.js";
-import { redisClient } from "../configs/redis.js";
+import User from "./models/user.model.js";
+import Post from "../post/models/post.model.js";
+import Connection from "./models/connection.model.js";
+import { inngest } from "../../shared/inngest/index.js";
+import { redisClient } from "../../shared/configs/redis.js";
 
 export const clearUserProfileCache = async (profileId) => {
     if (!redisClient.isReady) return;
@@ -17,8 +17,6 @@ export const clearUserProfileCache = async (profileId) => {
         console.error("Cache clear error", err);
     }
 };
-
-
 
 //Get user data using userId
 export const getUserData = async (req, res) => {
@@ -177,7 +175,6 @@ export const discoverUsers = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 }
-
 
 //Follow a User
 export const followUser = async (req, res) => {

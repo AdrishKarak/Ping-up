@@ -1,11 +1,11 @@
 import crypto from 'crypto';
-import Message from '../models/Message.js';
-import imagekit from '../configs/imagekit.js';
+import Message from './models/message.model.js';
+import imagekit from '../../shared/configs/imagekit.js';
 import { toFile } from '@imagekit/nodejs';
-import { inngest } from '../inngest/index.js';
-import { pubClient, subClient } from '../configs/redis.js';
-import User from '../models/User.js';
-import { getStreamApiKey, getStreamClient } from '../configs/stream.js';
+import { inngest } from '../../shared/inngest/index.js';
+import { pubClient, subClient } from '../../shared/configs/redis.js';
+import User from '../user/models/user.model.js';
+import { getStreamApiKey, getStreamClient } from '../../shared/configs/stream.js';
 
 //Create an empty object to store ss event Connections
 const connectedClients = {};

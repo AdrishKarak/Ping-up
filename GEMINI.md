@@ -75,11 +75,11 @@ npm run dev
 ## Development Conventions
 
 ### Backend
+- **Modular Monolith:** Organized into feature-based domain modules (`modules/user`, `modules/post`, `modules/comment`, `modules/story`, `modules/message`) and shared infrastructure (`shared/`).
 - **ES Modules:** The project uses native ES modules (`"type": "module"`).
-- **Controllers:** Business logic is encapsulated in controllers (e.g., `userController.js`, `postController.js`).
-- **Routes:** Explicit route definitions in `routes/` directory.
-- **Middlewares:** Authentication is handled by a `protect` middleware using Clerk.
-- **Models:** Mongoose models are located in `models/`.
+- **Modules:** Business logic, routes, and Mongoose models are encapsulated within domain module folders.
+- **Middlewares:** Shared guards like `protect` auth middleware and `rateLimiter` live in `shared/middlewares/`.
+- **Shared Infrastructure:** Global configs (DB, Redis, ImageKit, Multer, Nodemailer, Stream) live in `server/shared/configs/`.
 
 ### Frontend
 - **Components:** Reusable UI components are in `src/components/`.

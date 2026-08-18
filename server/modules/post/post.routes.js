@@ -1,8 +1,8 @@
 import express from "express";
 import multer from "multer";
-import { addPost, getFeedPosts, likePost, deletePost, getPost } from "../controllers/postController.js";
-import { protect } from "../middlewares/auth.js";
-import { upload } from "../configs/multer.js";
+import { addPost, getFeedPosts, likePost, deletePost, getPost } from "./post.controller.js";
+import { protect } from "../../shared/middlewares/auth.js";
+import { upload } from "../../shared/configs/multer.js";
 
 const postRouter = express.Router();
 

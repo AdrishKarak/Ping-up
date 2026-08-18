@@ -55,7 +55,7 @@ This document records the full suite of backend, frontend, database, and system-
       
       ### 5.1. The Real-Time Pipeline Workflow:                                                                                     
                                                                                                                               
-  1. DB Persistence: When a user sends a message, it is first saved to MongoDB via  Message.create  in messageController.js.       
+  1. DB Persistence: When a user sends a message, it is first saved to MongoDB via Message.create in message.controller.js (Message module).       
   2. Publishing to Redis: If Redis is connected, the server publishes the message payload to a Redis channel called           
   'MESSAGES' :                                                                                                                
     await pubClient.publish('MESSAGES', JSON.stringify({ to_user_id, messageWithUserData }));                                 

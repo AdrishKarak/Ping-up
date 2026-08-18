@@ -1,9 +1,8 @@
-import Story from '../models/Story.js';
-import User from '../models/User.js';
-import { inngest } from '../inngest/index.js';
-import imagekit from '../configs/imagekit.js';
+import Story from './models/story.model.js';
+import User from '../user/models/user.model.js';
+import { inngest } from '../../shared/inngest/index.js';
+import imagekit from '../../shared/configs/imagekit.js';
 import { toFile } from '@imagekit/nodejs';
-
 
 //Add User Story
 export const addStory = async (req, res) => {
@@ -97,7 +96,6 @@ export const getStories = async (req, res) => {
         //Get stories of user and their connections & followings
         const userIds = [userId, ...user.connections, ...user.following];
         const stories = await Story.find({ user: { $in: userIds } }).populate('user').sort({ createdAt: -1 });
-
 
         return res.status(200).json({ success: true, stories });
     } catch (error) {

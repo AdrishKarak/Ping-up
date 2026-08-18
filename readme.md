@@ -55,13 +55,17 @@ Ping-up/
 │       ├── features/      # Redux slices & feature-specific logic
 │       ├── pages/         # Route-level screen components
 │       └── assets/        # Stylesheets & static images
-├── server/                # Express backend
-│   ├── configs/           # Redis, ImageKit, Multer, Stream, & DB configurations
-│   ├── controllers/       # Business logic for Users, Posts, Stories, etc.
-│   ├── inngest/           # Event-driven functions (e.g., auto-delete stories)
-│   ├── middlewares/       # Auth guards, Rate limiters, & Error handlers
-│   ├── models/            # Mongoose schemas for MongoDB
-│   └── routes/            # API endpoint definitions
+├── server/                # Modular Monolith Express backend
+│   ├── shared/            # Cross-cutting infrastructure
+│   │   ├── configs/       # Redis, ImageKit, Multer, Stream, & DB configurations
+│   │   ├── inngest/       # Background jobs & event-driven functions
+│   │   └── middlewares/   # Auth guards, Rate limiters, & Heartbeat
+│   └── modules/           # Domain feature modules (vertical slices)
+│       ├── user/          # User profile, connections, & discovery domain
+│       ├── post/          # Post creation, feed, & likes domain
+│       ├── comment/       # Post comments & nested replies domain
+│       ├── story/         # Transient 24h media stories domain
+│       └── message/       # SSE messaging & Stream video calling domain
 └── readme.md
 ```
 

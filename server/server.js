@@ -2,18 +2,18 @@ import express from "express";
 import cors from 'cors';
 import compression from 'compression';
 import 'dotenv/config';
-import connectDB from './configs/db.js';
-import { connectRedis } from './configs/redis.js';
-import { initMessagePubSub } from './controllers/messageController.js';
-import { inngest, functions } from './inngest/index.js';
+import connectDB from './shared/configs/db.js';
+import { connectRedis } from './shared/configs/redis.js';
+import { initMessagePubSub } from './modules/message/index.js';
+import { inngest, functions } from './shared/inngest/index.js';
 import { serve } from 'inngest/express';
-import { clerkMiddleware } from '@clerk/express'
-import { heartbeatMiddleware } from './middlewares/heartbeat.js';
-import userRouter from "./routes/userRoutes.js";
-import postRouter from "./routes/postRoutes.js";
-import storyRouter from "./routes/storyRoutes.js";
-import messageRouter from "./routes/messageRoutes.js";
-import commentRouter from "./routes/commentRoutes.js";
+import { clerkMiddleware } from '@clerk/express';
+import { heartbeatMiddleware } from './shared/middlewares/heartbeat.js';
+import userRouter from "./modules/user/index.js";
+import postRouter from "./modules/post/index.js";
+import storyRouter from "./modules/story/index.js";
+import messageRouter from "./modules/message/index.js";
+import commentRouter from "./modules/comment/index.js";
 
 const app = express();
 
@@ -41,7 +41,7 @@ if (RENDER_EXTERNAL_URL) {
 }
 
 // Dynamic import to ensure rateLimiter is initialized after Redis connection
-const { rateLimiter } = await import('./middlewares/rateLimiter.js');
+const { rateLimiter } = await import('./shared/middlewares/rateLimiter.js');
 
 app.use(express.json());
 app.use(compression());
